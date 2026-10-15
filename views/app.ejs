@@ -34,14 +34,19 @@
       <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights'}[page] %></strong></div><div class="topbar-date" id="topbarDate"></div></header>
       <% if (page === 'app') { %>
         <section class="hero-banner">
-          <div><span class="hero-kicker">✧ UM NOVO DIA, NO SEU RITMO</span><h1>Olá, <%= name.split(' ')[0] %> <span class="wave">✳</span></h1><p>Vamos organizar o que importa hoje, sem pressa.</p><button class="btn btn-white" id="quickTask">+ Adicionar tarefa</button></div>
+          <div><span class="hero-kicker">✧ UM NOVO DIA, NO SEU RITMO</span><h1>Olá, <%= name.split(' ')[0] %> <span class="wave">✳</span></h1><p id="heroSubtitle">Vamos organizar o que importa hoje, sem pressa.</p><div class="hero-actions"><button class="btn btn-white" id="quickTask">+ Tarefa de hoje</button><a class="btn hero-outline" href="/calendar">Ver calendário →</a></div></div>
           <div class="hero-art" aria-hidden="true"><span class="blob-main"></span><span class="orbit one">✳</span><span class="orbit two">✦</span><span class="orbit three">◌</span></div>
         </section>
-        <section class="stats-grid" id="dashboardStats"><div class="stat-card skeleton">Carregando resumo...</div></section>
+        <section class="stats-grid" id="dashboardStats" aria-label="Resumo do dia"><div class="stat-card skeleton">Carregando resumo...</div></section>
+        <div class="dashboard-focus">
+          <section class="panel progress-panel"><div class="panel-header"><div><p class="eyebrow">SEU RITMO DE HOJE</p><h2>Um passo de cada vez</h2></div><span class="progress-sparkle" aria-hidden="true">✳</span></div><div id="homeProgress"><p class="muted">Carregando progresso...</p></div></section>
+          <section class="panel agenda-panel"><div class="panel-header"><div><p class="eyebrow">NÃO PERCA DE VISTA</p><h2>Próximos compromissos</h2></div><a class="subtle-link" href="/calendar">Calendário →</a></div><div id="homeEvents" class="agenda-items"><p class="muted">Carregando agenda...</p></div></section>
+        </div>
         <div class="two-columns">
-          <section class="panel"><div class="panel-header"><div><p class="eyebrow">SUAS PRIORIDADES</p><h2>Tarefas pendentes</h2></div><a class="subtle-link" href="/tasks">Ver todas →</a></div><div id="homeTasks" class="items-list"><p class="muted">Carregando...</p></div></section>
+          <section class="panel"><div class="panel-header"><div><p class="eyebrow">NA ORDEM CERTA</p><h2>Próximas tarefas</h2></div><a class="subtle-link" href="/tasks">Ver todas →</a></div><div id="homeTasks" class="items-list"><p class="muted">Carregando...</p></div></section>
           <section class="panel"><div class="panel-header"><div><p class="eyebrow">CONSISTÊNCIA, NÃO PERFEIÇÃO</p><h2>Hábitos de hoje</h2></div><a class="subtle-link" href="/habits">Ver hábitos →</a></div><div id="homeHabits" class="items-list"><p class="muted">Carregando...</p></div></section>
         </div>
+        <section class="panel week-panel"><div class="panel-header"><div><p class="eyebrow">UMA SEMANA MAIS LEVE</p><h2>Seus próximos 7 dias</h2></div><a class="subtle-link" href="/calendar">Abrir calendário →</a></div><div id="weekStrip" class="week-strip" aria-label="Resumo dos próximos sete dias"><p class="muted">Carregando semana...</p></div><p class="week-legend">◉ Tarefas com prazo pendentes ou compromissos agendados</p></section>
         <section class="quote-bar"><span>✦</span> Você não precisa fazer tudo hoje. Só precisa decidir o que é importante.</section>
       <% } else if (page === 'tasks') { %>
         <section class="page-heading"><div><p class="eyebrow">UMA COISA DE CADA VEZ</p><h1>Minhas tarefas <span class="heading-sparkle">✳</span></h1><p class="muted">Um lugar para tudo o que você quer realizar.</p></div><button class="btn btn-primary" id="newTask">+ Nova tarefa</button></section>

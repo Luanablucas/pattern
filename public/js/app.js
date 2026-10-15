@@ -79,52 +79,151 @@ function taskRow(task, { compact = false } = {}) {
   </div>`;
 }
 function renderDashboard() {
-  const pending = state.tasks.filter((x) => !x.completed);
-  const completed = state.tasks.filter((x) => x.completed).length;
-  const doneToday = state.entries.filter((x) => x.date === todayISO()).length;
+  const today = todayISO();
+  const now = new Date();
+  const pending = state.tasks.filter((task) => !task.completed);
+  const tasksForToday = state.tasks.filter((task) => task.dueDate === today);
+  const todayCompleted = tasksForToday.filter((task) => task.completed).length;
+  const overdue = pending.filter(
+    (task) => task.dueDate && task.dueDate < today,
+  );
+  const dueToday = pending.filter((task) => task.dueDate === today);
+  const habitsCompleted = state.habits.filter((habit) =>
+    state.entries.some(
+      (entry) => entry.habitId === habit.id && entry.date === today,
+    ),
+  ).length;
   const stats = [
     {
-      label: "Tarefas pendentes",
-      number: pending.length,
-      caption: "Para organizar no seu tempo",
-      icon: "☑",
+      label: "Com prazo para hoje",
+      number: dueToday.length,
+      caption: "Tarefas que ainda precisam de atenção",
+      icon: "☷",
     },
     {
-      label: "Tarefas concluídas",
-      number: completed,
-      caption: "Desde que você começou",
-      icon: "✦",
-    },
-    {
-      label: "Hábitos de hoje",
-      number: `${doneToday}/${state.habits.length}`,
-      caption: "Um dia de cada vez",
+      label: "Atrasadas",
+      number: overdue.length,
+      caption: overdue.length
+        ? "Você pode reorganizar com calma"
+        : "Nenhuma tarefa atrasada",
       icon: "◷",
+    },
+    {
+      label: "Hábitos realizados",
+      number: `${habitsCompleted}/${state.habits.length}`,
+      caption: "Pequenos passos contam",
+      icon: "✦",
     },
   ];
   $("#dashboardStats").innerHTML = stats
     .map(
-      (s) =>
-        `<article class="stat-card"><div class="stat-label">${s.label}<span class="stat-icon">${s.icon}</span></div><div class="stat-number">${s.number}</div><div class="stat-caption">${s.caption}</div></article>`,
+      (stat) =>
+        `<article class="stat-card"><div class="stat-label">${stat.label}<span class="stat-icon" aria-hidden="true">${stat.icon}</span></div><div class="stat-number">${stat.number}</div><div class="stat-caption">${stat.caption}</div></article>`,
     )
     .join("");
-  $("#homeTasks").innerHTML = pending.length
-    ? pending
+
+  const hour = now.getHours();
+  $("#heroSubtitle").textContent =
+    hour < 12
+      ? "Bom dia! Um plano simples pode deixar tudo mais leve."
+      : hour < 18
+        ? "Boa tarde! Ainda dá tempo de cuidar do que importa."
+        : "Boa noite! Veja o que ficou para hoje, sem cobranças.";
+
+  function progress(label, done, total, emptyLabel) {
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+    return `<div class="progress-group"><div class="progress-head"><span>${label}</span><strong>${total ? `${done} de ${total}` : emptyLabel}</strong></div><div class="progress-track" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div></div>`;
+  }
+  $("#homeProgress").innerHTML = `
+    <div class="progress-summary"><strong>${tasksForToday.length + state.habits.length ? "Seu dia está ganhando forma ✦" : "Comece no seu ritmo ✦"}</strong><span>Seu progresso é calculado apenas com tarefas com prazo para hoje e hábitos cadastrados.</span></div>
+    ${progress("Tarefas de hoje", todayCompleted, tasksForToday.length, "Nenhuma agendada")}
+    ${progress("Hábitos de hoje", habitsCompleted, state.habits.length, "Nenhum cadastrado")}`;
+
+  const priorityRank = { high: 0, medium: 1, low: 2 };
+  // Ordena primeiro tarefas vencidas, depois as de hoje, as futuras e por último as sem prazo.
+  const ordered = [...pending].sort((a, b) => {
+    const dateA = a.dueDate || "9999-12-31";
+    const dateB = b.dueDate || "9999-12-31";
+    return (
+      dateA.localeCompare(dateB) ||
+      (priorityRank[a.priority] ?? 1) - (priorityRank[b.priority] ?? 1) ||
+      a.title.localeCompare(b.title, "pt-BR")
+    );
+  });
+  $("#homeTasks").innerHTML = ordered.length
+    ? ordered
         .slice(0, 5)
-        .map((x) => taskRow(x, { compact: true }))
+        .map((task) => taskRow(task, { compact: true }))
         .join("")
     : empty("Tudo em dia por aqui ✦", "Adicione uma tarefa para começar.");
   $("#homeHabits").innerHTML = state.habits.length
     ? state.habits
         .slice(0, 6)
-        .map((h) => {
+        .map((habit) => {
           const checked = state.entries.some(
-            (e) => e.habitId === h.id && e.date === todayISO(),
+            (entry) => entry.habitId === habit.id && entry.date === today,
           );
-          return `<div class="item-row"><input class="check" type="checkbox" data-habit-check="${h.id}" data-date="${todayISO()}" aria-label="Marcar ${escapeHTML(h.name)}" ${checked ? "checked" : ""}><div class="item-info"><div class="item-title ${checked ? "done" : ""}">${escapeHTML(h.name)}</div><div class="item-meta">${checked ? "Feito hoje. Boa!" : "Ainda dá tempo ✧"}</div></div></div>`;
+          return `<div class="item-row"><input class="check" type="checkbox" data-habit-check="${habit.id}" data-date="${today}" aria-label="${checked ? "Desmarcar" : "Marcar"} ${escapeHTML(habit.name)}" ${checked ? "checked" : ""}><div class="item-info"><div class="item-title ${checked ? "done" : ""}">${escapeHTML(habit.name)}</div><div class="item-meta">${checked ? "Feito hoje. Boa!" : "Ainda dá tempo ✧"}</div></div></div>`;
         })
         .join("")
     : empty("Sua rotina, suas regras", "Crie seu primeiro hábito.");
+
+  const upcoming = state.events
+    .filter((event) => {
+      const starts = new Date(event.startsAt);
+      const ends = new Date(event.endsAt);
+      const limit = new Date(now);
+      limit.setDate(limit.getDate() + 6);
+      limit.setHours(23, 59, 59, 999);
+      return !Number.isNaN(starts.getTime()) && ends >= now && starts <= limit;
+    })
+    .sort((a, b) => new Date(a.startsAt) - new Date(b.startsAt));
+  $("#homeEvents").innerHTML = upcoming.length
+    ? upcoming
+        .slice(0, 3)
+        .map((event) => {
+          const starts = new Date(event.startsAt);
+          const ends = new Date(event.endsAt);
+          const ongoing = starts <= now && ends >= now;
+          const dayLabel =
+            localISO(starts) === today
+              ? "Hoje"
+              : starts
+                  .toLocaleDateString("pt-BR", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "short",
+                  })
+                  .replace(".", "");
+          const timeLabel = ongoing
+            ? "Em andamento"
+            : starts.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+          return `<article class="agenda-item"><div class="agenda-date"><strong>${escapeHTML(dayLabel)}</strong><span>${escapeHTML(timeLabel)}</span></div><div class="agenda-info"><strong>${escapeHTML(event.title)}</strong>${event.notes ? `<span>${escapeHTML(event.notes)}</span>` : ""}</div></article>`;
+        })
+        .join("")
+    : `<div class="agenda-empty"><span aria-hidden="true">☼</span><strong>Agenda tranquila por enquanto</strong><p>Nenhum compromisso nos próximos sete dias.</p><a class="subtle-link" href="/calendar">Planejar um compromisso →</a></div>`;
+
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date();
+    day.setHours(12, 0, 0, 0);
+    day.setDate(day.getDate() + index);
+    const iso = localISO(day);
+    const tasksCount = pending.filter((task) => task.dueDate === iso).length;
+    const eventsCount = state.events.filter(
+      (event) => localISO(new Date(event.startsAt)) === iso,
+    ).length;
+    const summary = `${tasksCount} tarefa(s) pendente(s), ${eventsCount} compromisso(s)`;
+    return `<div class="week-day ${index === 0 ? "is-today" : ""}" aria-label="${escapeHTML(day.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }))}: ${summary}">
+      <span class="week-day-name">${escapeHTML(day.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", ""))}</span>
+      <strong class="week-day-number">${day.getDate()}</strong>
+      <span class="week-day-dot ${tasksCount + eventsCount ? "has-plans" : ""}" aria-hidden="true"></span>
+      <small>${tasksCount + eventsCount ? `${tasksCount + eventsCount} ${tasksCount + eventsCount === 1 ? "item" : "itens"}` : "Livre"}</small>
+    </div>`;
+  });
+  $("#weekStrip").innerHTML = days.join("");
 }
 function renderTasks() {
   const filtered = state.tasks.filter(
@@ -249,14 +348,14 @@ async function refreshHabits() {
   if (page === "habits") renderHabits();
   if (page === "app") renderDashboard();
 }
-function openTask(task = null) {
+function openTask(task = null, { forToday = false } = {}) {
   const dialog = $("#taskDialog");
   const form = $("#taskForm");
   form.reset();
   form.elements.id.value = task?.id || "";
   form.elements.title.value = task?.title || "";
   form.elements.notes.value = task?.notes || "";
-  form.elements.dueDate.value = task?.dueDate || "";
+  form.elements.dueDate.value = forToday ? todayISO() : task?.dueDate || "";
   form.elements.priority.value = task?.priority || "medium";
   $("#taskDialogTitle").textContent = task ? "Editar tarefa" : "Nova tarefa";
   $("#taskError").hidden = true;
@@ -281,7 +380,6 @@ function openEvent() {
   $("#eventDialog").showModal();
 }
 
-
 document.addEventListener("click", async (e) => {
   const target = e.target.closest("button, a");
   if (!target) return;
@@ -290,7 +388,11 @@ document.addEventListener("click", async (e) => {
       $(`#${target.dataset.close}`).close();
       return;
     }
-    if (target.matches("#quickTask, #newTask")) {
+    if (target.matches("#quickTask")) {
+      openTask(null, { forToday: true });
+      return;
+    }
+    if (target.matches("#newTask")) {
       openTask();
       return;
     }
@@ -478,7 +580,18 @@ async function init() {
     month: "long",
   });
   try {
-    if (page === "app") await Promise.all([refreshTasks(), refreshHabits()]);
+    if (page === "app") {
+      const [tasks, habitsData, events] = await Promise.all([
+        api("/api/tasks"),
+        api("/api/habits"),
+        api("/api/events"),
+      ]);
+      state.tasks = tasks;
+      state.habits = habitsData.habits;
+      state.entries = habitsData.entries;
+      state.events = events;
+      renderDashboard();
+    }
     if (page === "tasks") await refreshTasks();
     if (page === "habits") await refreshHabits();
     if (page === "calendar") {
