@@ -7,7 +7,9 @@ const state = {
   entries: [],
   events: [],
   filter: "all",
-  weekOffset: 0,
+  calendarView: "month",
+  calendarCursor: new Date(),
+  calendarRequest: 0,
 };
 const $ = (selector) => document.querySelector(selector);
 const escapeHTML = (value = "") =>
@@ -280,41 +282,161 @@ function renderHabits() {
     })
     .join("");
 }
+const eventCategories = {
+  study: "Estudos",
+  work: "Trabalho",
+  personal: "Pessoal",
+  health: "Saúde",
+  other: "Outros",
+};
+function calendarDays() {
+  const first = new Date(state.calendarCursor);
+  first.setHours(12, 0, 0, 0);
+  if (state.calendarView === "month") first.setDate(1);
+  first.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+  const count = state.calendarView === "month" ? 42 : 7;
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(first);
+    d.setDate(first.getDate() + i);
+    return d;
+  });
+}
+function overlapsDay(event, date) {
+  const start = fromISO(date);
+  start.setHours(0, 0, 0, 0);
+  const next = new Date(start);
+  next.setDate(next.getDate() + 1);
+  return new Date(event.startsAt) < next && new Date(event.endsAt) > start;
+}
+function calendarTitle(days) {
+  if (state.calendarView === "month")
+    return state.calendarCursor.toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+    });
+  const first = days[0];
+  const last = days[days.length - 1];
+  const start = first.toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "short",
+  });
+  const end = last.toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  return `${start} – ${end}`;
+}
 function renderCalendar() {
-  const monday = new Date();
-  monday.setHours(12, 0, 0, 0);
-  monday.setDate(
-    monday.getDate() - ((monday.getDay() + 6) % 7) + state.weekOffset * 7,
+  if (page !== "calendar") return;
+  const days = calendarDays();
+  const today = todayISO();
+  $("#calendarTitle").textContent = calendarTitle(days);
+  $("#calendarGrid").classList.toggle(
+    "calendar-month",
+    state.calendarView === "month",
   );
-  const sunday = new Date(monday);
-  sunday.setDate(sunday.getDate() + 6);
-  const fmt = (d) =>
-    d.toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
-  $("#calendarTitle").textContent = `${fmt(monday)} — ${fmt(sunday)}`;
-  let markup = "";
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday);
-    d.setDate(d.getDate() + i);
-    const date = localISO(d);
-    const scheduled = state.tasks.filter((t) => t.dueDate === date);
-    const appts = state.events.filter(
-      (e) => localISO(new Date(e.startsAt)) === date,
+  $("#calendarGrid").classList.toggle(
+    "calendar-week",
+    state.calendarView === "week",
+  );
+  document.querySelectorAll("[data-calendar-view]").forEach((button) => {
+    const selected = button.dataset.calendarView === state.calendarView;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  $("#calendarGrid").innerHTML = days
+    .map((d) => {
+      const date = localISO(d);
+      const tasks = state.tasks.filter((task) => task.dueDate === date);
+      const events = state.events.filter((event) => overlapsDay(event, date));
+      const hasPlans = tasks.length + events.length > 0;
+      const eventCards = events
+        .map((event) => {
+          const category = Object.hasOwn(eventCategories, event.category)
+            ? event.category
+            : "personal";
+          const startingHere = localISO(new Date(event.startsAt)) === date;
+          const time = startingHere
+            ? new Date(event.startsAt).toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Continua";
+          return `<button class="cal-entry cal-appointment category-${category}" type="button" data-event-edit="${event.id}" title="Editar compromisso: ${escapeHTML(event.title)}">
+        <span class="cal-entry-time">${escapeHTML(time)}</span><span class="cal-entry-title">${escapeHTML(event.title)}</span></button>`;
+        })
+        .join("");
+      const taskCards = tasks
+        .map(
+          (
+            task,
+          ) => `<button class="cal-entry cal-task ${task.completed ? "is-complete" : ""}" draggable="true" type="button" data-task-drag="${task.id}" data-task-edit="${task.id}" title="Arraste para reagendar ou clique para editar: ${escapeHTML(task.title)}">
+      <span class="cal-entry-symbol" aria-hidden="true">${task.completed ? "✓" : "☐"}</span><span class="cal-entry-title">${escapeHTML(task.title)}</span></button>`,
+        )
+        .join("");
+      const label = d.toLocaleDateString("pt-BR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      return `<div class="calendar-day ${date === today ? "today" : ""} ${state.calendarView === "month" && d.getMonth() !== state.calendarCursor.getMonth() ? "outside-month" : ""}" data-drop-date="${date}" aria-label="${escapeHTML(label)}">
+      <div class="calendar-day-head"><span class="calendar-day-num" ${date === today ? 'aria-current="date"' : ""}>${d.getDate()}</span><button type="button" class="calendar-add" data-day-create="${date}" aria-label="Novo compromisso em ${escapeHTML(label)}" title="Novo compromisso neste dia">+</button></div>
+      <div class="calendar-day-body">${eventCards}${taskCards}${!hasPlans ? '<span class="calendar-day-free">Dia livre</span>' : ""}</div>
+    </div>`;
+    })
+    .join("");
+
+  const unscheduled = state.tasks.filter(
+    (task) => !task.dueDate && !task.completed,
+  );
+  $("#unscheduledCount").textContent =
+    `${unscheduled.length} ${unscheduled.length === 1 ? "tarefa" : "tarefas"}`;
+  $("#unscheduledTasks").innerHTML = unscheduled.length
+    ? unscheduled
+        .map(
+          (task) =>
+            `<button type="button" class="unscheduled-chip" draggable="true" data-task-drag="${task.id}" data-task-edit="${task.id}" title="Arraste para o calendário ou clique para editar"><span aria-hidden="true">☰</span> ${escapeHTML(task.title)}</button>`,
+        )
+        .join("")
+    : '<p class="muted small">Tudo planejado! Suas tarefas pendentes já têm uma data. ✦</p>';
+}
+async function loadCalendarEvents() {
+  if (page !== "calendar") return;
+  const request = ++state.calendarRequest;
+  const days = calendarDays();
+  const from = new Date(days[0]);
+  from.setHours(0, 0, 0, 0);
+  const to = new Date(days[days.length - 1]);
+  to.setDate(to.getDate() + 1);
+  to.setHours(0, 0, 0, 0);
+  $("#calendarFeedback").textContent = "Atualizando compromissos...";
+  try {
+    const events = await api(
+      `/api/events?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`,
     );
-    const cards = scheduled
-      .map(
-        (t) =>
-          `<div class="cal-event" title="Tarefa">${t.completed ? "✓ " : ""}${escapeHTML(t.title)}</div>`,
-      )
-      .join("");
-    const eventCards = appts
-      .map(
-        (e) =>
-          `<div class="cal-event appointment"><small>${new Date(e.startsAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</small>${escapeHTML(e.title)}<button class="cal-remove" data-event-delete="${e.id}" aria-label="Excluir compromisso">×</button></div>`,
-      )
-      .join("");
-    markup += `<div class="calendar-day ${date === todayISO() ? "today" : ""}"><div class="calendar-day-title">${d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</div><div class="calendar-day-num">${d.getDate()}</div>${cards}${eventCards}</div>`;
+    if (request !== state.calendarRequest) return;
+    state.events = events;
+    renderCalendar();
+    $("#calendarFeedback").textContent = "";
+  } catch (error) {
+    if (request !== state.calendarRequest) return;
+    $("#calendarFeedback").textContent =
+      "Não foi possível carregar os compromissos deste período.";
+    showError(error);
   }
-  $("#calendarGrid").innerHTML = markup;
+}
+async function moveTaskToDate(taskId, date) {
+  const task = state.tasks.find((t) => t.id === taskId);
+  if (!task || !/^\d{4}-\d{2}-\d{2}$/.test(date) || task.dueDate === date)
+    return;
+  await api(`/api/tasks/${taskId}/date`, {
+    method: "PATCH",
+    body: { dueDate: date },
+  });
+  await refreshTasks();
+  toast(`Tarefa movida para ${shortDate(date)}.`);
 }
 function renderInsights(data) {
   const max = Math.max(1, ...data.days.map((x) => x.completed));
@@ -366,20 +488,38 @@ function localDateTimeInput(date) {
   const d = new Date(date);
   return `${localISO(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
-function openEvent() {
+function openEvent(event = null, forDate = null) {
   const form = $("#eventForm");
   form.reset();
   $("#eventError").hidden = true;
-  const starts = new Date();
-  starts.setMinutes(0, 0, 0);
-  starts.setHours(starts.getHours() + 1);
-  const ends = new Date(starts);
-  ends.setHours(ends.getHours() + 1);
+  const starts = event
+    ? new Date(event.startsAt)
+    : forDate
+      ? fromISO(forDate)
+      : new Date();
+  if (!event && forDate) starts.setHours(9, 0, 0, 0);
+  if (!event && !forDate) {
+    starts.setMinutes(0, 0, 0);
+    starts.setHours(starts.getHours() + 1);
+  }
+  const ends = event
+    ? new Date(event.endsAt)
+    : new Date(starts.getTime() + 60 * 60 * 1000);
+  form.elements.id.value = event?.id || "";
+  form.elements.title.value = event?.title || "";
   form.elements.startsAt.value = localDateTimeInput(starts);
   form.elements.endsAt.value = localDateTimeInput(ends);
+  form.elements.category.value = event?.category || "personal";
+  form.elements.notes.value = event?.notes || "";
+  $("#eventDialogTitle").textContent = event
+    ? "Editar compromisso"
+    : "Novo compromisso";
+  $("#deleteEvent").hidden = !event;
   $("#eventDialog").showModal();
+  form.elements.title.focus();
 }
 
+// Eventos delegados permitem atualizar as listas após cada alteração.
 document.addEventListener("click", async (e) => {
   const target = e.target.closest("button, a");
   if (!target) return;
@@ -398,6 +538,38 @@ document.addEventListener("click", async (e) => {
     }
     if (target.matches("#newEvent")) {
       openEvent();
+      return;
+    }
+    if (target.dataset.dayCreate) {
+      openEvent(null, target.dataset.dayCreate);
+      return;
+    }
+    if (target.dataset.eventEdit) {
+      const event = state.events.find(
+        (item) => item.id === target.dataset.eventEdit,
+      );
+      if (event) openEvent(event);
+      return;
+    }
+    if (target.dataset.calendarView) {
+      state.calendarView = target.dataset.calendarView;
+      await loadCalendarEvents();
+      return;
+    }
+    if (target.id === "prevPeriod" || target.id === "nextPeriod") {
+      const direction = target.id === "prevPeriod" ? -1 : 1;
+      const d = new Date(state.calendarCursor);
+      if (state.calendarView === "month") {
+        d.setDate(1);
+        d.setMonth(d.getMonth() + direction);
+      } else d.setDate(d.getDate() + direction * 7);
+      state.calendarCursor = d;
+      await loadCalendarEvents();
+      return;
+    }
+    if (target.id === "currentPeriod") {
+      state.calendarCursor = new Date();
+      await loadCalendarEvents();
       return;
     }
     if (target.dataset.filter) {
@@ -437,30 +609,14 @@ document.addEventListener("click", async (e) => {
       await refreshHabits();
       return;
     }
-    if (target.dataset.eventDelete) {
-      if (window.confirm("Excluir este compromisso?")) {
-        await api(`/api/events/${target.dataset.eventDelete}`, {
-          method: "DELETE",
-        });
-        state.events = await api("/api/events");
-        renderCalendar();
+    if (target.id === "deleteEvent") {
+      const id = $("#eventForm").elements.id.value;
+      if (id && window.confirm("Excluir este compromisso?")) {
+        await api(`/api/events/${id}`, { method: "DELETE" });
+        $("#eventDialog").close();
+        await loadCalendarEvents();
         toast("Compromisso excluído.");
       }
-      return;
-    }
-    if (target.id === "prevWeek") {
-      state.weekOffset--;
-      renderCalendar();
-      return;
-    }
-    if (target.id === "nextWeek") {
-      state.weekOffset++;
-      renderCalendar();
-      return;
-    }
-    if (target.id === "currentWeek") {
-      state.weekOffset = 0;
-      renderCalendar();
       return;
     }
     if (target.id === "logoutBtn") {
@@ -526,6 +682,7 @@ $("#taskForm").addEventListener("submit", async (e) => {
 $("#eventForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.currentTarget;
+  const id = form.elements.id.value;
   const error = $("#eventError");
   error.hidden = true;
   const startDate = new Date(form.elements.startsAt.value);
@@ -535,27 +692,70 @@ $("#eventForm").addEventListener("submit", async (e) => {
     Number.isNaN(endDate.getTime()) ||
     startDate >= endDate
   ) {
-    error.textContent = "Confira as datas de início e término.";
+    error.textContent = "O término precisa ser depois do início.";
     error.hidden = false;
     return;
   }
+  const body = {
+    title: form.elements.title.value,
+    startsAt: startDate.toISOString(),
+    endsAt: endDate.toISOString(),
+    category: form.elements.category.value,
+    notes: form.elements.notes.value,
+  };
   try {
-    await api("/api/events", {
-      method: "POST",
-      body: {
-        title: form.elements.title.value,
-        startsAt: startDate.toISOString(),
-        endsAt: endDate.toISOString(),
-        notes: form.elements.notes.value,
-      },
+    await api(id ? `/api/events/${id}` : "/api/events", {
+      method: id ? "PUT" : "POST",
+      body,
     });
     $("#eventDialog").close();
-    state.events = await api("/api/events");
-    renderCalendar();
-    toast("Compromisso criado!");
+    await loadCalendarEvents();
+    toast(id ? "Compromisso atualizado!" : "Compromisso criado!");
   } catch (err) {
     error.textContent = err.message;
     error.hidden = false;
+  }
+});
+
+document.addEventListener("dragstart", (e) => {
+  const task = e.target.closest("[data-task-drag]");
+  if (!task || page !== "calendar") return;
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", task.dataset.taskDrag);
+  task.classList.add("is-dragging");
+});
+document.addEventListener("dragend", (e) => {
+  e.target.closest("[data-task-drag]")?.classList.remove("is-dragging");
+  document
+    .querySelectorAll(".calendar-day.drop-target")
+    .forEach((d) => d.classList.remove("drop-target"));
+});
+document.addEventListener("dragover", (e) => {
+  const day = e.target.closest("[data-drop-date]");
+  if (
+    !day ||
+    page !== "calendar" ||
+    !e.dataTransfer.types.includes("text/plain")
+  )
+    return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  document.querySelectorAll(".calendar-day.drop-target").forEach((d) => {
+    if (d !== day) d.classList.remove("drop-target");
+  });
+  day.classList.add("drop-target");
+});
+document.addEventListener("drop", async (e) => {
+  const day = e.target.closest("[data-drop-date]");
+  if (!day || page !== "calendar") return;
+  e.preventDefault();
+  day.classList.remove("drop-target");
+  const id = e.dataTransfer.getData("text/plain");
+  if (!state.tasks.some((task) => task.id === id)) return;
+  try {
+    await moveTaskToDate(id, day.dataset.dropDate);
+  } catch (error) {
+    showError(error);
   }
 });
 $("#habitForm")?.addEventListener("submit", async (e) => {
@@ -595,11 +795,8 @@ async function init() {
     if (page === "tasks") await refreshTasks();
     if (page === "habits") await refreshHabits();
     if (page === "calendar") {
-      [state.tasks, state.events] = await Promise.all([
-        api("/api/tasks"),
-        api("/api/events"),
-      ]);
-      renderCalendar();
+      state.tasks = await api("/api/tasks");
+      await loadCalendarEvents();
     }
     if (page === "insights") renderInsights(await api("/api/insights"));
   } catch (err) {

@@ -48,3 +48,13 @@ CREATE TABLE IF NOT EXISTS events (
   CHECK (ends_at > starts_at)
 );
 CREATE INDEX IF NOT EXISTS idx_events_user_start ON events(user_id, starts_at);
+
+ALTER TABLE events ADD COLUMN IF NOT EXISTS category VARCHAR(16) NOT NULL DEFAULT 'personal';
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'events_category_check' AND conrelid = 'events'::regclass) THEN
+    ALTER TABLE events ADD CONSTRAINT events_category_check
+      CHECK (category IN ('study','work','personal','health','other'));
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_events_user_end ON events(user_id, ends_at);
