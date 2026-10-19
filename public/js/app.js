@@ -741,7 +741,7 @@ document.addEventListener("click", async (e) => {
     if (target.dataset.taskDelete) {
       const task=state.tasks.find(t=>t.id===target.dataset.taskDelete);
       if(task?.isRecurring){askDelete({kind:'task',id:task.seriesId,instance:task.occurrenceDate,title:task.title,recurring:true});}
-      else if(window.confirm('Excluir esta tarefa?')){await api(`/api/tasks/${target.dataset.taskDelete}`,{method:'DELETE'});await refreshTasks();toast('Tarefa excluída.');}
+      else if(task){askDelete({kind:'task',id:task.id,title:task.title,recurring:false});}
       return;
     }
     if (target.matches("#newHabit")) {
@@ -1032,16 +1032,21 @@ async function init() {
   });
   try {
     if (page === "app") {
-      const [tasks, habitsData, events] = await Promise.all([
+      const [tasks, habitsData, events, focusHistory] = await Promise.all([
         api("/api/tasks"),
         api("/api/habits"),
         api("/api/events"),
+        api("/api/focus/history?days=7"),
       ]);
       state.tasks = tasks;
       state.habits = habitsData.habits;
       state.entries = habitsData.entries;
       state.events = events;
       renderDashboard();
+      const recorded = focusHistory.summary.seconds;
+      const hours = Math.floor(recorded / 3600);
+      const minutes = Math.floor((recorded % 3600) / 60);
+      $("#homeFocusSummary").textContent = `${hours ? `${hours}h ` : ""}${minutes}min de foco em ${focusHistory.summary.sessions} sessões nos últimos 7 dias.`;
     }
     if (page === "tasks") await refreshTasks();
     if (page === "habits") await refreshHabits();

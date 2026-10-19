@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
-  <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=0.5.1" />
+  <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco'}[page] %> — Pattern</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=0.6.0" />
   <script defer src="/static/js/habit-utils.js?v=0.5.1"></script>
-  <script defer src="/static/js/app.js?v=0.5.1"></script>
+  <script defer src="/static/js/app.js?v=0.6.0"></script>
+  <% if (page === "focus") { %><script defer src="/static/js/focus-core.js?v=0.6.0"></script><script defer src="/static/js/focus.js?v=0.6.0"></script><% } %>
 </head>
 <body data-page="<%= page %>">
   <div class="shell">
@@ -17,6 +18,7 @@
       <nav class="nav-list">
         <a href="/app" class="nav-link <%= page === 'app' ? 'active' : '' %>"><span class="nav-icon">⌂</span> Hoje</a>
         <a href="/tasks" class="nav-link <%= page === 'tasks' ? 'active' : '' %>"><span class="nav-icon">☑</span> Tarefas</a>
+        <a href="/focus" class="nav-link <%= page === 'focus' ? 'active' : '' %>"><span class="nav-icon">◉</span> Foco</a>
         <a href="/calendar" class="nav-link <%= page === 'calendar' ? 'active' : '' %>"><span class="nav-icon">▦</span> Calendário</a>
         <a href="/habits" class="nav-link <%= page === 'habits' ? 'active' : '' %>"><span class="nav-icon">◷</span> Hábitos</a>
         <a href="/insights" class="nav-link <%= page === 'insights' ? 'active' : '' %>"><span class="nav-icon">◫</span> Insights</a>
@@ -32,7 +34,7 @@
     </aside>
 
     <main class="main-content">
-      <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights'}[page] %></strong></div><div class="topbar-date" id="topbarDate"></div></header>
+      <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco'}[page] %></strong></div><div class="topbar-date" id="topbarDate"></div></header>
       <% if (page === 'app') { %>
         <section class="hero-banner">
           <div><span class="hero-kicker">✧ UM NOVO DIA, NO SEU RITMO</span><h1>Olá, <%= name.split(' ')[0] %> <span class="wave">✳</span></h1><p id="heroSubtitle">Vamos organizar o que importa hoje, sem pressa.</p><div class="hero-actions"><button class="btn btn-white" id="quickTask">+ Tarefa de hoje</button><a class="btn hero-outline" href="/calendar">Ver calendário →</a></div></div>
@@ -43,6 +45,11 @@
           <section class="panel progress-panel"><div class="panel-header"><div><p class="eyebrow">SEU RITMO DE HOJE</p><h2>Um passo de cada vez</h2></div><span class="progress-sparkle" aria-hidden="true">✳</span></div><div id="homeProgress"><p class="muted">Carregando progresso...</p></div></section>
           <section class="panel agenda-panel"><div class="panel-header"><div><p class="eyebrow">NÃO PERCA DE VISTA</p><h2>Próximos compromissos</h2></div><a class="subtle-link" href="/calendar">Calendário →</a></div><div id="homeEvents" class="agenda-items"><p class="muted">Carregando agenda...</p></div></section>
         </div>
+        <section class="panel dashboard-focus-shortcut">
+          <div class="focus-shortcut-icon">◉</div>
+          <div class="focus-shortcut-text"><p class="eyebrow">SEU TEMPO TEM VALOR</p><h2>Um momento de foco</h2><p id="homeFocusSummary" class="muted small">Carregando seu tempo de foco...</p></div>
+          <a class="btn btn-primary" href="/focus">Abrir modo foco →</a>
+        </section>
         <div class="two-columns">
           <section class="panel"><div class="panel-header"><div><p class="eyebrow">NA ORDEM CERTA</p><h2>Próximas tarefas</h2></div><a class="subtle-link" href="/tasks">Ver todas →</a></div><div id="homeTasks" class="items-list"><p class="muted">Carregando...</p></div></section>
           <section class="panel"><div class="panel-header"><div><p class="eyebrow">CONSISTÊNCIA, NÃO PERFEIÇÃO</p><h2>Hábitos de hoje</h2></div><a class="subtle-link" href="/habits">Ver hábitos →</a></div><div id="homeHabits" class="items-list"><p class="muted">Carregando...</p></div></section>
@@ -52,6 +59,21 @@
       <% } else if (page === 'tasks') { %>
         <section class="page-heading"><div><p class="eyebrow">UMA COISA DE CADA VEZ</p><h1>Minhas tarefas <span class="heading-sparkle">✳</span></h1><p class="muted">Um lugar para tudo o que você quer realizar.</p></div><button class="btn btn-primary" id="newTask">+ Nova tarefa</button></section>
         <section class="panel"><div class="filter-row"><div class="tabs" role="group" aria-label="Filtrar tarefas"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendentes</button><button class="tab" data-filter="done">Concluídas</button></div><span class="filter-count" id="tasksCount"></span></div><div class="items-list" id="taskList"><p class="muted">Carregando tarefas...</p></div></section>
+      <% } else if (page === 'focus') { %>
+        <section class="page-heading focus-heading"><div><p class="eyebrow">UM MOMENTO PARA O QUE IMPORTA</p><h1>Modo Foco <span class="heading-sparkle">✳</span></h1><p class="muted">Escolha uma tarefa, encontre seu ritmo e acompanhe o tempo dedicado.</p></div></section>
+        <div class="focus-layout">
+          <section class="panel focus-session-panel" aria-label="Cronômetro de foco">
+            <div class="focus-modes" role="group" aria-label="Modo da sessão"><button class="focus-mode is-active" type="button" data-focus-mode="pomodoro" aria-pressed="true">◷ Pomodoro</button><button class="focus-mode" type="button" data-focus-mode="free" aria-pressed="false">⏱ Cronômetro livre</button></div>
+            <div class="focus-setup"><label>Vincular a uma tarefa (opcional)<select id="focusTask"><option value="">Sem tarefa vinculada</option></select></label><div id="focusDurationWrap"><label for="focusDuration">Duração do foco (minutos)</label><div class="focus-duration-line"><input type="number" id="focusDuration" value="25" min="5" max="180" step="1" /><div class="focus-presets" role="group" aria-label="Tempos sugeridos"><button type="button" data-focus-minutes="15">15</button><button type="button" class="is-active" data-focus-minutes="25">25</button><button type="button" data-focus-minutes="50">50</button></div></div></div></div>
+            <div class="focus-dial-area"><div class="focus-dial" id="focusDial"><div class="focus-dial-inner"><span class="focus-dial-caption" id="focusTimerLabel">TEMPO PARA FOCAR</span><strong class="focus-time" id="focusTimer" aria-live="off">25:00</strong><span class="focus-dial-status" id="focusStatus">Pronta para começar</span></div></div></div>
+            <p class="focus-current-task" id="focusCurrentTask">Escolha uma tarefa ou comece livremente.</p>
+            <p class="focus-error error-message" id="focusError" role="alert" hidden></p>
+            <div class="focus-actions"><button type="button" class="btn btn-primary" id="focusStart">▶ Iniciar foco</button><button type="button" class="btn btn-soft" id="focusPause" hidden>Ⅱ Pausar</button><button type="button" class="btn btn-primary" id="focusResume" hidden>▶ Retomar</button><button type="button" class="btn btn-danger-outline" id="focusFinish" hidden>□ Encerrar e salvar</button></div>
+            <p class="muted small focus-footnote">O tempo de foco não inclui as pausas. Sessões concluídas ficam registradas no histórico.</p>
+            <div class="focus-break-panel" id="focusBreakPanel" hidden><p class="eyebrow">DESCANSE UM POUCO</p><h3>Intervalo entre sessões</h3><strong id="focusBreakTime">05:00</strong><div class="focus-actions"><button type="button" class="btn btn-soft" id="focusBreakStart">Começar intervalo</button><button type="button" class="btn btn-soft" id="focusBreakSkip">Ignorar intervalo</button></div></div>
+          </section>
+          <section class="focus-side-column"><div class="panel focus-week-panel"><div class="panel-header"><div><p class="eyebrow">SEU RITMO</p><h2>Tempo de foco</h2></div><select id="focusRange" aria-label="Período do histórico"><option value="7">7 dias</option><option value="14">14 dias</option><option value="30">30 dias</option></select></div><div class="focus-stats"><div><strong id="focusTotal">0 min</strong><span>Tempo registrado</span></div><div><strong id="focusSessions">0</strong><span>Sessões</span></div><div><strong id="focusDays">0</strong><span>Dias ativos</span></div></div><div class="focus-bars" id="focusBars" aria-label="Foco por dia"></div></div><div class="panel focus-history-panel"><div class="panel-header"><div><p class="eyebrow">UM DIA DE CADA VEZ</p><h2>Últimas sessões</h2></div></div><div id="focusHistory" class="focus-history-list"><p class="muted small">Carregando histórico...</p></div></div></section>
+        </div>
       <% } else if (page === 'calendar') { %>
         <section class="page-heading calendar-heading">
           <div><p class="eyebrow">UM LUGAR PARA SEUS PLANOS</p><h1>Meu calendário <span class="heading-sparkle">✳</span></h1><p class="muted">Planeje seu tempo com leveza, no seu ritmo.</p></div>

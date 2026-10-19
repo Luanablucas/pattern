@@ -143,7 +143,7 @@ const uuidRoute = (req, res, next) => {
 app.get("/", (req, res) => res.redirect(getUser(req) ? "/app" : "/login"));
 app.get("/login", (req, res) => res.render("auth", { mode: "login" }));
 app.get("/register", (req, res) => res.render("auth", { mode: "register" }));
-const pages = ["app", "tasks", "calendar", "habits", "insights"];
+const pages = ["app", "tasks", "calendar", "habits", "insights", "focus"];
 app.get("/:page", requirePageAuth, (req, res, next) => {
   if (!pages.includes(req.params.page)) return next();
   res.render("app", { page: req.params.page, name: req.user.name });
@@ -808,6 +808,8 @@ app.get(
     });
   }),
 );
+
+require("./focus-routes")(app, db, asyncRoute, uuidRoute);
 
 app.use("/api", (_req, res) =>
   res.status(404).json({ error: "Rota não encontrada." }),

@@ -142,3 +142,27 @@ BEGIN
     ALTER TABLE events ADD CONSTRAINT events_time_mode_check CHECK (time_mode IN ('exact','all_day','morning','afternoon','night'));
   END IF;
 END $$;
+
+CREATE TABLE IF NOT EXISTS focus_sessions (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  task_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
+  task_title VARCHAR(160),
+  mode VARCHAR(10) NOT NULL CHECK (mode IN ('pomodoro','free')),
+  planned_seconds INTEGER CHECK (planned_seconds BETWEEN 300 AND 10800),
+  status VARCHAR(10) NOT NULL CHECK (status IN ('running','paused','completed')),
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  active_since TIMESTAMPTZ,
+  paused_at TIMESTAMPTZ,
+  elapsed_seconds INTEGER NOT NULL DEFAULT 0 CHECK (elapsed_seconds >= 0),
+  pause_seconds INTEGER NOT NULL DEFAULT 0 CHECK (pause_seconds >= 0),
+  finished_at TIMESTAMPTZ,
+  CHECK ((mode='pomodoro' AND planned_seconds IS NOT NULL) OR (mode='free' AND planned_seconds IS NULL)),
+  CHECK ((status='running' AND active_since IS NOT NULL AND paused_at IS NULL AND finished_at IS NULL)
+    OR (status='paused' AND paused_at IS NOT NULL AND active_since IS NULL AND finished_at IS NULL)
+    OR (status='completed' AND active_since IS NULL AND paused_at IS NULL AND finished_at IS NOT NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_focus_user_active ON focus_sessions(user_id)
+  WHERE status IN ('running','paused');
+CREATE INDEX IF NOT EXISTS idx_focus_user_finished ON focus_sessions(user_id,finished_at DESC)
+  WHERE status='completed';
