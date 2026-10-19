@@ -48,16 +48,16 @@ function withMocks(run) {
   }
 }
 
-test("as 40 rotas públicas e protegidas continuam registradas",()=>{
+test("as 44 rotas públicas e protegidas continuam registradas",()=>{
   withMocks(()=>{
     const {createApp}=require("../src/app");
     const db={query:async()=>({rows:[],rowCount:0})};
     const app=createApp(db);
     const expected={
-      get:["/","/login","/register","/:page","/api/tasks","/api/routines","/api/habits","/api/event-categories","/api/events","/api/insights","/api/focus/active","/api/focus/history"],
-      post:["/api/auth/register","/api/auth/login","/api/auth/logout","/api/tasks","/api/routines","/api/habits","/api/habits/:id/check","/api/event-categories","/api/events","/api/focus/start","/api/focus/:id/pause","/api/focus/:id/resume","/api/focus/:id/finish"],
+      get:["/","/login","/register","/:page","/api/tasks","/api/routines","/api/habits","/api/event-categories","/api/events","/api/insights","/api/focus/active","/api/focus/history","/api/focus/calendar"],
+      post:["/api/auth/register","/api/auth/login","/api/auth/logout","/api/tasks","/api/routines","/api/habits","/api/habits/:id/check","/api/event-categories","/api/events","/api/events/conflicts","/api/focus/start","/api/focus/:id/pause","/api/focus/:id/resume","/api/focus/:id/finish"],
       put:["/api/tasks/:id","/api/routines/:id","/api/habits/:id","/api/event-categories/:id","/api/events/:id"],
-      patch:["/api/recurring-tasks/:id/:date/toggle","/api/tasks/:id/date","/api/tasks/:id/toggle"],
+      patch:["/api/recurring-tasks/:id/:date/toggle","/api/tasks/:id/date","/api/tasks/:id/toggle","/api/events/:id/occurrences/:date","/api/events/:id/future/:date"],
       delete:["/api/recurring-tasks/:id/:date","/api/tasks/:id","/api/routines/:id","/api/habits/:id","/api/event-categories/:id","/api/events/:id/occurrences/:date","/api/events/:id"]
     };
     const expectedKeys=Object.entries(expected).flatMap(([m,list])=>list.map(route=>`${m} ${route}`)).sort();

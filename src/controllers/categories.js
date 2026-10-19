@@ -25,7 +25,8 @@ const update = async(req,res)=>{
 };
 const remove = async(req,res)=>{
   const used=(await db.query('SELECT 1 FROM events WHERE user_id=$1 AND category_id=$2 LIMIT 1',[req.user.id,req.params.id])).rowCount;
-  if(used)return res.status(409).json({error:'Este bloco possui compromissos. Mova-os para outro bloco antes de excluir.'});
+  const overrideUsed=(await db.query("SELECT 1 FROM event_overrides o JOIN events e ON e.id=o.event_id WHERE e.user_id=$1 AND o.category_id=$2 LIMIT 1",[req.user.id,req.params.id])).rowCount;
+  if(used || overrideUsed)return res.status(409).json({error:'Este bloco possui compromissos. Mova-os para outro bloco antes de excluir.'});
   const result=await db.query('DELETE FROM event_categories WHERE id=$1 AND user_id=$2',[req.params.id,req.user.id]);
   if(!result.rowCount)return res.status(404).json({error:'Bloco não encontrado.'});
   res.json({ok:true});

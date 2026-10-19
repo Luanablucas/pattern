@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=0.6.0" />
+  <link rel="stylesheet" href="/static/css/style.css?v=0.7.0" />
   <script defer src="/static/js/habit-utils.js?v=0.5.1"></script>
-  <script defer src="/static/js/app.js?v=0.6.0"></script>
+  <script defer src="/static/js/app.js?v=0.7.0"></script>
   <% if (page === "focus") { %><script defer src="/static/js/focus-core.js?v=0.6.0"></script><script defer src="/static/js/focus.js?v=0.6.0"></script><% } %>
 </head>
 <body data-page="<%= page %>">
@@ -85,7 +85,7 @@
             <div class="calendar-toolbar">
               <div class="calendar-switch" role="group" aria-label="Visualização do calendário">
                 <button type="button" class="calendar-switch-btn active" data-calendar-view="month" aria-pressed="true">Mês</button>
-                <button type="button" class="calendar-switch-btn" data-calendar-view="week" aria-pressed="false">Semana</button>
+                <button type="button" class="calendar-switch-btn" data-calendar-view="week" aria-pressed="false">Semana</button><button type="button" class="calendar-switch-btn" data-calendar-view="day" aria-pressed="false">Dia</button>
               </div>
               <div class="calendar-actions">
                 <button class="icon-button" id="prevPeriod" type="button" aria-label="Período anterior">←</button>
@@ -95,12 +95,12 @@
             </div>
           </div>
           <div class="calendar-categories-row"><div class="calendar-legend" id="calendarLegend" aria-label="Blocos de compromissos"></div><button type="button" class="btn btn-soft" id="manageCategories">✎ Meus blocos</button></div>
-          <p class="calendar-help">Compromissos e tarefas podem se repetir sem serem hábitos. Selecione o <strong>+</strong> de um dia para criar um compromisso. Arraste tarefas para mudar sua data; no celular, toque na tarefa e edite a data.</p>
+          <p class="calendar-help">Veja seus planos por mês, semana ou dia. Arraste compromissos para mudar o dia ou horário; no celular, toque para editar. Sobreposições são sinalizadas antes de salvar.</p>
           <div class="calendar-scroll" tabindex="0" aria-label="Grade do calendário com rolagem horizontal em telas pequenas">
-            <div class="calendar-weekdays" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
-            <div id="calendarGrid" class="calendar-grid calendar-month" aria-live="polite"><p class="muted">Carregando agenda...</p></div>
+            <div class="calendar-weekdays" id="calendarWeekdays" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+            <div id="calendarGrid" class="calendar-grid calendar-month" aria-live="polite"><p class="muted">Carregando agenda...</p></div><div id="calendarDayView" class="day-view" hidden></div>
           </div>
-          <p class="calendar-feedback" id="calendarFeedback" role="status" aria-live="polite"></p>
+          <p class="calendar-feedback" id="calendarFeedback" role="status" aria-live="polite"></p><div id="calendarConflictSummary" class="calendar-conflict-summary" hidden></div>
         </section>
         <section class="panel calendar-backlog">
           <div class="panel-header"><div><p class="eyebrow">AINDA SEM DATA</p><h2>Tarefas para planejar</h2></div><span class="muted small" id="unscheduledCount"></span></div>
@@ -136,12 +136,14 @@
     <label id="eventDateField" hidden>Data do compromisso<input name="eventDate" type="date" /></label>
     <p class="muted small" id="eventTimeHelp" hidden></p>
     <label>Bloco do compromisso<select name="categoryId" required></select></label>
-    <label>Repetir compromisso<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Dias específicos da semana</option><option value="monthly">Todo mês</option></select></label>
+    <div data-event-recurrence><label>Repetir compromisso<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Dias específicos da semana</option><option value="monthly">Todo mês</option></select></label>
     <fieldset class="repeat-weekdays" data-repeat-days="event" hidden><legend>Escolha os dias da semana</legend><div class="repeat-days"></div></fieldset>
     <label data-repeat-until="event" hidden>Repetir até (opcional)<input type="date" name="repeatUntil" /></label>
-    <p class="muted small repeat-info" data-repeat-message="event" hidden>Ao editar um compromisso recorrente, você modifica a série inteira. Para excluir apenas uma data, use o botão Excluir.</p>
+    <p class="muted small repeat-info" data-repeat-message="event" hidden>A programação se aplica às próximas ocorrências de acordo com a escolha de edição.</p></div>
+    <label id="eventScopeWrap" hidden>Aplicar alterações a<select id="eventEditScope" name="editScope"><option value="one">Somente esta ocorrência</option><option value="future">Esta e as próximas ocorrências</option><option value="all">Toda a série</option></select></label>
+    <p class="muted small" id="eventScopeNote" hidden></p>
     <label>Observações (opcional)<textarea name="notes" rows="2" maxlength="2000" placeholder="Informações para lembrar depois..."></textarea></label>
-    <p class="error-message" id="eventError" role="alert" hidden></p>
+    <p class="calendar-event-warning" id="eventConflictNotice" hidden></p><p class="error-message" id="eventError" role="alert" hidden></p>
     <div class="modal-actions event-modal-actions"><button type="button" class="btn btn-danger-outline" id="deleteEvent" hidden>Excluir</button><span class="modal-action-spacer"></span><button type="button" class="btn btn-soft" data-close="eventDialog">Cancelar</button><button type="submit" class="btn btn-primary" id="saveEvent">Salvar compromisso</button></div>
   </form></dialog>
   <dialog id="habitDialog" class="modal habit-modal"><form id="habitEditForm" class="form-stack">

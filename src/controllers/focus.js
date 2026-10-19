@@ -110,5 +110,14 @@ const history = async (req, res) => {
       activeDays: daily.filter(day => day.seconds > 0).length
     }});
   };
-return {active,start,pause,resume,finish,history};
+const calendar = async (req, res) => {
+    const range = z.object({ from:z.string().datetime({offset:true}),to:z.string().datetime({offset:true}) }).strict().safeParse(req.query);
+    if (!range.success) return res.status(400).json({error:"Período inválido."});
+    const from = new Date(range.data.from),to = new Date(range.data.to);
+    if (to <= from || to-from > 70*86400000) return res.status(400).json({error:"Informe um período de até 70 dias."});
+    await finishExpired(req.user.id);
+    const {rows} = await db.query(`SELECT id,task_title AS "taskTitle",started_at AS "startedAt",finished_at AS "finishedAt",elapsed_seconds AS "elapsedSeconds",mode FROM focus_sessions WHERE user_id=$1 AND status='completed' AND finished_at>=$2 AND started_at<$3 ORDER BY started_at ASC LIMIT 600`,[req.user.id,from.toISOString(),to.toISOString()]);
+    res.json(rows);
+  };
+return {active,start,pause,resume,finish,history,calendar};
 };

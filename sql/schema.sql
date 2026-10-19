@@ -166,3 +166,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_focus_user_active ON focus_sessions(user_i
   WHERE status IN ('running','paused');
 CREATE INDEX IF NOT EXISTS idx_focus_user_finished ON focus_sessions(user_id,finished_at DESC)
   WHERE status='completed';
+
+CREATE TABLE IF NOT EXISTS event_overrides (
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  occurrence_date DATE NOT NULL,
+  title VARCHAR(160) NOT NULL,
+  starts_at TIMESTAMPTZ NOT NULL,
+  ends_at TIMESTAMPTZ NOT NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  category_id UUID NOT NULL REFERENCES event_categories(id) ON DELETE RESTRICT,
+  time_mode VARCHAR(12) NOT NULL CHECK (time_mode IN ('exact','all_day','morning','afternoon','night')),
+  PRIMARY KEY (event_id, occurrence_date),
+  CHECK (ends_at > starts_at)
+);
+CREATE INDEX IF NOT EXISTS idx_event_overrides_window ON event_overrides(starts_at, ends_at);

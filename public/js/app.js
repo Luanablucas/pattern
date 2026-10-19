@@ -12,6 +12,8 @@ const state = {
   calendarView: "month",
   calendarCursor: new Date(),
   calendarRequest: 0,
+  focusCalendar: [],
+  categoryFilter: null,
 };
 const $ = (selector) => document.querySelector(selector);
 const HabitRules = window.PatternHabits;
@@ -205,12 +207,9 @@ function renderDashboard() {
                     month: "short",
                   })
                   .replace(".", "");
-          const timeLabel =
-            event.timeMode && event.timeMode !== "exact"
-              ? eventTimeLabel(event)
-              : ongoing
-                ? "Em andamento"
-                : eventTimeLabel(event);
+          const timeLabel = event.timeMode && event.timeMode!=='exact'
+            ? eventTimeLabel(event)
+            : ongoing ? "Em andamento" : eventTimeLabel(event);
           return `<article class="agenda-item"><div class="agenda-date"><strong>${escapeHTML(dayLabel)}</strong><span>${escapeHTML(timeLabel)}</span></div><div class="agenda-info"><strong>${escapeHTML(event.title)}</strong>${event.notes ? `<span>${escapeHTML(event.notes)}</span>` : ""}</div></article>`;
         })
         .join("")
@@ -387,63 +386,30 @@ function openRoutine(routine = null) {
   f.elements.name.focus();
 }
 
-function displayColor(color) {
-  return /^#[0-9a-fA-F]{6}$/.test(color || "") ? color : "#9984a8";
+function displayColor(color){return /^#[0-9a-fA-F]{6}$/.test(color||'') ? color : '#9984a8';}
+function repeatDescription(repeat){return ({daily:'Diária',weekly:'Semanal',monthly:'Mensal'})[repeat]||'';}
+function calendarLegend(){
+  const el=$('#calendarLegend');if(!el)return;
+  el.innerHTML=`<button type="button" class="cal-filter ${state.categoryFilter===null?'is-selected':''}" data-category-filter="all" aria-pressed="${state.categoryFilter===null}">Todos</button>`+state.categories.map(c=>`<button type="button" class="cal-filter ${state.categoryFilter===c.id?'is-selected':''}" data-category-filter="${c.id}" aria-pressed="${state.categoryFilter===c.id}" style="--event-accent:${displayColor(c.color)}"><i class="legend-dot"></i>${escapeHTML(c.name)}</button>`).join('');
 }
-function repeatDescription(repeat) {
-  return (
-    { daily: "Diária", weekly: "Semanal", monthly: "Mensal" }[repeat] || ""
-  );
+function fillCategorySelect(selected){
+  const sel=$('#eventForm').elements.categoryId;
+  sel.innerHTML=state.categories.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
+  sel.value=selected&&state.categories.some(c=>c.id===selected)?selected:(state.categories.find(c=>c.legacyKey==='personal')||state.categories[0])?.id||'';
 }
-function calendarLegend() {
-  const el = $("#calendarLegend");
-  if (!el) return;
-  el.innerHTML =
-    state.categories
-      .map(
-        (c) =>
-          `<span class="cal-legend-item" style="--event-accent:${displayColor(c.color)}"><i class="legend-dot"></i>${escapeHTML(c.name)}</span>`,
-      )
-      .join("") +
-    '<span class="cal-legend-item" style="--event-accent:#9984a8"><i class="legend-dot"></i>Tarefas</span>';
+function renderCategoryManager(){
+ const el=$('#categoryList');
+ el.innerHTML=state.categories.length?state.categories.map(c=>`<div class="category-list-row" style="--event-accent:${displayColor(c.color)}"><span class="category-dot"></span><strong>${escapeHTML(c.name)}</strong><button type="button" class="mini-button" data-category-edit="${c.id}" aria-label="Editar ${escapeHTML(c.name)}">✎</button><button type="button" class="mini-button" data-category-delete="${c.id}" aria-label="Excluir ${escapeHTML(c.name)}">×</button></div>`).join(''):empty('Sem blocos','Crie um bloco para classificar seus compromissos.');
 }
-function fillCategorySelect(selected) {
-  const sel = $("#eventForm").elements.categoryId;
-  sel.innerHTML = state.categories
-    .map((c) => `<option value="${c.id}">${escapeHTML(c.name)}</option>`)
-    .join("");
-  sel.value =
-    selected && state.categories.some((c) => c.id === selected)
-      ? selected
-      : (
-          state.categories.find((c) => c.legacyKey === "personal") ||
-          state.categories[0]
-        )?.id || "";
-}
-function renderCategoryManager() {
-  const el = $("#categoryList");
-  el.innerHTML = state.categories.length
-    ? state.categories
-        .map(
-          (c) =>
-            `<div class="category-list-row" style="--event-accent:${displayColor(c.color)}"><span class="category-dot"></span><strong>${escapeHTML(c.name)}</strong><button type="button" class="mini-button" data-category-edit="${c.id}" aria-label="Editar ${escapeHTML(c.name)}">✎</button><button type="button" class="mini-button" data-category-delete="${c.id}" aria-label="Excluir ${escapeHTML(c.name)}">×</button></div>`,
-        )
-        .join("")
-    : empty("Sem blocos", "Crie um bloco para classificar seus compromissos.");
-}
-async function refreshCategories() {
-  state.categories = await api("/api/event-categories");
-  if (page === "calendar") {
-    calendarLegend();
-    renderCategoryManager();
-    fillCategorySelect();
-    renderCalendar();
-  }
+async function refreshCategories(){
+ state.categories=await api('/api/event-categories');
+ if(page==='calendar'){calendarLegend();renderCategoryManager();fillCategorySelect();renderCalendar();}
 }
 
 function calendarDays() {
   const first = new Date(state.calendarCursor);
   first.setHours(12, 0, 0, 0);
+  if (state.calendarView === "day") return [first];
   if (state.calendarView === "month") first.setDate(1);
   first.setDate(first.getDate() - ((first.getDay() + 6) % 7));
   const count = state.calendarView === "month" ? 42 : 7;
@@ -461,6 +427,7 @@ function overlapsDay(event, date) {
   return new Date(event.startsAt) < next && new Date(event.endsAt) > start;
 }
 function calendarTitle(days) {
+  if (state.calendarView === "day") return state.calendarCursor.toLocaleDateString("pt-BR", { weekday:"long",day:"numeric",month:"long",year:"numeric" });
   if (state.calendarView === "month")
     return state.calendarCursor.toLocaleDateString("pt-BR", {
       month: "long",
@@ -479,10 +446,66 @@ function calendarTitle(days) {
   });
   return `${start} – ${end}`;
 }
+function visibleCalendarEvents() {
+  return state.categoryFilter ? state.events.filter(ev=>ev.categoryId===state.categoryFilter) : state.events;
+}
+function eventOverlaps(a,b) {
+  return new Date(a.startsAt)<new Date(b.endsAt) && new Date(b.startsAt)<new Date(a.endsAt);
+}
+function conflictIds(events) {
+  const ids=new Set();
+  for(let i=0;i<events.length;i++)for(let j=i+1;j<events.length;j++) {
+    if(eventOverlaps(events[i],events[j])){ids.add(events[i].id);ids.add(events[j].id);}
+  }
+  return ids;
+}
+function timelineMinute(instant, day) {
+  const date = new Date(instant), midnight=new Date(`${day}T00:00:00`);
+  return Math.max(0,Math.min(1440,Math.round((date-midnight)/60000)));
+}
+function timelineLayout(entries,day) {
+  const items=entries.map(item=>({...item,top:timelineMinute(item.startsAt,day),end:timelineMinute(item.endsAt,day)})).filter(item=>item.end>item.top).sort((a,b)=>a.top-b.top||b.end-a.end);
+  const groups=[]; let active=[]; let group=[];
+  const flush=()=>{if(group.length)groups.push(group);group=[];active=[];};
+  for(const item of items){
+    active=active.filter(x=>x.end>item.top);
+    if(!active.length)flush();
+    let col=0;while(active.some(x=>x.column===col))col++;
+    item.column=col;active.push(item);group.push(item);
+  }
+  flush();
+  return groups.flatMap(g=>g.map(e=>({...e,columns:Math.max(...g.map(x=>x.column))+1})));
+}
+function focusDayEntries(day) {
+  return state.focusCalendar.filter(f=>new Date(f.startedAt)<new Date(`${day}T23:59:59`) && new Date(f.finishedAt)>new Date(`${day}T00:00:00`));
+}
+function renderDailyTimeline(day) {
+  const events=visibleCalendarEvents().filter(e=>overlapsDay(e,day));
+  const tasks=state.tasks.filter(t=>t.dueDate===day);
+  const allDay=events.filter(e=>e.timeMode==='all_day');
+  const timed=events.filter(e=>e.timeMode!=='all_day');
+  const focus=focusDayEntries(day);
+  const conflicts=conflictIds(events);
+  const banner=[...allDay.map(ev=>`<button type="button" class="day-banner-event" style="--event-accent:${displayColor(ev.categoryColor)}" data-event-edit="${ev.id}" draggable="true" data-event-drag="${ev.id}">Dia inteiro · ${escapeHTML(ev.title)}${ev.isRecurring?' ↻':''}</button>`),...tasks.map(t=>`<button type="button" class="day-banner-task" data-task-edit="${t.id}" ${!t.isRecurring?`draggable="true" data-task-drag="${t.id}"`:''}>☑ ${escapeHTML(t.title)}${t.isRecurring?' ↻':''}</button>`)].join('');
+  const entries=timelineLayout([...timed.map(ev=>({kind:'event',id:ev.id,title:ev.title,startsAt:ev.startsAt,endsAt:ev.endsAt,event:ev})),...focus.map(f=>({kind:'focus',id:f.id,title:f.taskTitle||'Sessão de foco',startsAt:f.startedAt,endsAt:f.finishedAt,focus:f}))],day);
+  const hours=Array.from({length:24},(_,h)=>`<div class="day-hour-drop" style="top:${h*60}px" data-drop-date="${day}" data-drop-time="${String(h).padStart(2,'0')}:00" aria-label="Mover para ${String(h).padStart(2,'0')}:00"></div>`).join('');
+  const cards=entries.map(e=>{
+    const common=`style="top:${e.top}px;height:${Math.max(24,e.end-e.top)}px;left:calc(${e.column} * (100% / ${e.columns}) + 4px);width:calc(100% / ${e.columns} - 8px);"`;
+    if(e.kind==='focus')return `<div class="day-time-card day-focus" ${common} title="Foco registrado"><span>◷ Foco</span><strong>${escapeHTML(e.title)}</strong><small>${Math.round(e.focus.elapsedSeconds/60)} min registrados</small></div>`;
+    const ev=e.event;
+    return `<button class="day-time-card day-event ${conflicts.has(ev.id)?'has-conflict':''}" ${common.replace('style="',`style="--event-accent:${displayColor(ev.categoryColor)};`)} type="button" draggable="true" data-event-drag="${ev.id}" data-event-edit="${ev.id}" title="${conflicts.has(ev.id)?'Horário em conflito · ':''}Editar ${escapeHTML(ev.title)}"><span>${escapeHTML(eventTimeLabel(ev))}${ev.isRecurring?' ↻':''}</span><strong>${escapeHTML(ev.title)}</strong>${conflicts.has(ev.id)?'<small>⚠ Conflito de horário</small>':''}</button>`;
+  }).join('');
+  $('#calendarDayView').innerHTML=`<div class="day-heading"><strong>${escapeHTML(fromISO(day).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}</strong><button class="btn btn-soft" type="button" data-day-create="${day}">+ Compromisso</button></div><div class="day-banner" data-drop-date="${day}">${banner||'<span class="muted small">Sem tarefas ou eventos de dia inteiro.</span>'}</div><div class="day-timeline-layout"><div class="day-timeline-hours">${Array.from({length:24},(_,h)=>`<span style="top:${h*60}px">${String(h).padStart(2,'0')}:00</span>`).join('')}</div><div class="day-timeline-track">${hours}${cards}</div></div><p class="muted small">Os blocos de foco representam sessões registradas. Compromissos com horário indefinido aparecem conforme o período escolhido.</p>`;
+}
 function renderCalendar() {
   if (page !== "calendar") return;
   const days = calendarDays();
   const today = todayISO();
+  const daily=state.calendarView==='day';
+  $('#calendarWeekdays').hidden=daily;
+  $('#calendarGrid').hidden=daily;
+  $('#calendarDayView').hidden=!daily;
+  if(daily)renderDailyTimeline(localISO(days[0]));
   $("#calendarTitle").textContent = calendarTitle(days);
   $("#calendarGrid").classList.toggle(
     "calendar-month",
@@ -501,25 +524,28 @@ function renderCalendar() {
     .map((d) => {
       const date = localISO(d);
       const tasks = state.tasks.filter((task) => task.dueDate === date);
-      const events = state.events.filter((event) => overlapsDay(event, date));
-      const hasPlans = tasks.length + events.length > 0;
+      const events = visibleCalendarEvents().filter((event) => overlapsDay(event, date));
+      const focuses=focusDayEntries(date);
+      const conflicts=conflictIds(events);
+      const hasPlans = tasks.length + events.length + focuses.length > 0;
       const eventCards = events
         .map((event) => {
-          const categoryColor = displayColor(event.categoryColor);
+          const categoryColor=displayColor(event.categoryColor);
           const startingHere = localISO(new Date(event.startsAt)) === date;
           const time = startingHere ? eventTimeLabel(event) : "Continua";
-          return `<button class="cal-entry cal-appointment" style="--event-accent:${categoryColor}" type="button" data-event-edit="${event.id}" title="Editar compromisso: ${escapeHTML(event.title)}">
-        <span class="cal-entry-time">${escapeHTML(time)}</span><span class="cal-entry-title">${escapeHTML(event.title)}</span>${event.isRecurring ? `<span class="cal-entry-time">↻</span>` : ""}</button>`;
+          return `<button class="cal-entry cal-appointment ${conflicts.has(event.id)?'has-conflict':''}" draggable="true" data-event-drag="${event.id}" style="--event-accent:${categoryColor}" type="button" data-event-edit="${event.id}" title="${conflicts.has(event.id)?'Conflito de horário · ':''}Editar compromisso: ${escapeHTML(event.title)}">
+        <span class="cal-entry-time">${escapeHTML(time)}</span><span class="cal-entry-title">${escapeHTML(event.title)}</span>${event.isRecurring ? `<span class="cal-entry-time">↻</span>` : ""}${conflicts.has(event.id)?'<span class="cal-entry-time">⚠</span>':''}</button>`;
         })
         .join("");
       const taskCards = tasks
         .map(
           (
             task,
-          ) => `<button class="cal-entry cal-task ${task.completed ? "is-complete" : ""}" draggable="${!task.isRecurring}" type="button" ${task.isRecurring ? "" : `data-task-drag="${task.id}"`} data-task-edit="${task.id}" title="${task.isRecurring ? "Clique para editar a série" : "Arraste para reagendar ou clique para editar"}: ${escapeHTML(task.title)}">
-      <span class="cal-entry-symbol" aria-hidden="true">${task.completed ? "✓" : "☐"}</span><span class="cal-entry-title">${escapeHTML(task.title)}</span>${task.isRecurring ? `<span class="cal-entry-time">↻</span>` : ""}</button>`,
+          ) => `<button class="cal-entry cal-task ${task.completed ? "is-complete" : ""}" draggable="${!task.isRecurring}" type="button" ${task.isRecurring ? "" : `data-task-drag="${task.id}"`} data-task-edit="${task.id}" title="${task.isRecurring?"Clique para editar a série":"Arraste para reagendar ou clique para editar"}: ${escapeHTML(task.title)}">
+      <span class="cal-entry-symbol" aria-hidden="true">${task.completed ? "✓" : "☐"}</span><span class="cal-entry-title">${escapeHTML(task.title)}</span>${task.isRecurring?`<span class="cal-entry-time">↻</span>`:""}</button>`,
         )
         .join("");
+      const focusCards=focuses.map(f=>`<div class="cal-entry cal-focus" title="Foco registrado: ${escapeHTML(f.taskTitle||'Sessão livre')}">◷ ${escapeHTML(f.taskTitle||'Foco')} · ${Math.round(f.elapsedSeconds/60)}min</div>`).join('');
       const label = d.toLocaleDateString("pt-BR", {
         weekday: "long",
         day: "numeric",
@@ -527,12 +553,16 @@ function renderCalendar() {
         year: "numeric",
       });
       return `<div class="calendar-day ${date === today ? "today" : ""} ${state.calendarView === "month" && d.getMonth() !== state.calendarCursor.getMonth() ? "outside-month" : ""}" data-drop-date="${date}" aria-label="${escapeHTML(label)}">
-      <div class="calendar-day-head"><span class="calendar-day-num" ${date === today ? 'aria-current="date"' : ""}>${d.getDate()}</span><button type="button" class="calendar-add" data-day-create="${date}" aria-label="Novo compromisso em ${escapeHTML(label)}" title="Novo compromisso neste dia">+</button></div>
-      <div class="calendar-day-body">${eventCards}${taskCards}${!hasPlans ? '<span class="calendar-day-free">Dia livre</span>' : ""}</div>
+      <div class="calendar-day-head"><button type="button" class="calendar-day-num calendar-open-day" data-calendar-day="${date}" title="Ver dia ${date}" ${date === today ? 'aria-current="date"' : ""}>${d.getDate()}</button><button type="button" class="calendar-add" data-day-create="${date}" aria-label="Novo compromisso em ${escapeHTML(label)}" title="Novo compromisso neste dia">+</button></div>
+      <div class="calendar-day-body">${eventCards}${taskCards}${focusCards}${!hasPlans ? '<span class="calendar-day-free">Dia livre</span>' : ""}</div>
     </div>`;
     })
     .join("");
 
+  const overlapping=conflictIds(visibleCalendarEvents());
+  const summary=$('#calendarConflictSummary');
+  summary.hidden=!overlapping.size;
+  summary.textContent=overlapping.size?`⚠ ${overlapping.size} compromisso(s) com sobreposição de horários neste período. Veja os cartões sinalizados.`:'';
   const unscheduled = state.tasks.filter(
     (task) => !task.dueDate && !task.completed,
   );
@@ -558,17 +588,15 @@ async function loadCalendarEvents() {
   to.setHours(0, 0, 0, 0);
   $("#calendarFeedback").textContent = "Atualizando compromissos...";
   try {
-    const [events, tasks] = await Promise.all([
-      api(
-        `/api/events?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`,
-      ),
-      api(
-        `/api/tasks?from=${localISO(from)}&to=${localISO(new Date(to.getTime() - 86400000))}`,
-      ),
+    const [events,tasks,focus] = await Promise.all([
+      api(`/api/events?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`),
+      api(`/api/tasks?from=${localISO(from)}&to=${localISO(new Date(to.getTime()-86400000))}`),
+      api(`/api/focus/calendar?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`)
     ]);
     if (request !== state.calendarRequest) return;
     state.events = events;
-    state.tasks = tasks;
+    state.tasks=tasks;
+    state.focusCalendar=focus;
     renderCalendar();
     $("#calendarFeedback").textContent = "";
   } catch (error) {
@@ -622,9 +650,7 @@ function renderInsights(data) {
   }
 }
 async function refreshTasks() {
-  state.tasks = await api(
-    page === "tasks" ? "/api/tasks?list=1" : "/api/tasks",
-  );
+  state.tasks = await api(page==='tasks'?'/api/tasks?list=1':'/api/tasks');
   if (page === "tasks") renderTasks();
   if (page === "app") renderDashboard();
   if (page === "calendar") renderCalendar();
@@ -647,109 +673,117 @@ function openTask(task = null, { forToday = false } = {}) {
   form.elements.id.value = task?.seriesId || task?.id || "";
   form.elements.title.value = task?.title || "";
   form.elements.notes.value = task?.notes || "";
-  form.elements.dueDate.value = forToday
-    ? todayISO()
-    : task?.seriesDueDate || task?.dueDate || "";
+  form.elements.dueDate.value = forToday ? todayISO() : task?.seriesDueDate || task?.dueDate || "";
   form.elements.priority.value = task?.priority || "medium";
-  setRepeatFields(form, "task", task);
-  $("#taskDialogTitle").textContent = task
-    ? task.isRecurring
-      ? "Editar série de tarefas"
-      : "Editar tarefa"
-    : "Nova tarefa";
+  setRepeatFields(form,'task',task);
+  $("#taskDialogTitle").textContent = task ? (task.isRecurring?'Editar série de tarefas':'Editar tarefa') : "Nova tarefa";
   $("#taskError").hidden = true;
   dialog.showModal();
   form.elements.title.focus();
 }
-function formElementsStartDate() {
-  return $("#eventForm").elements.startsAt.value.slice(0, 10);
-}
+function formElementsStartDate(){return $('#eventForm').elements.startsAt.value.slice(0,10);}
 function eventTimeLabel(event) {
-  const labels = {
-    all_day: "Dia inteiro",
-    morning: "Manhã",
-    afternoon: "Tarde",
-    night: "Noite",
-  };
-  return (
-    labels[event.timeMode] ||
-    new Date(event.startsAt).toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  );
+  const labels={all_day:'Dia inteiro',morning:'Manhã',afternoon:'Tarde',night:'Noite'};
+  return labels[event.timeMode] || new Date(event.startsAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
-function setEventTimeVisibility() {
-  const form = $("#eventForm");
-  const exact = form.elements.timeMode.value === "exact";
-  $("#eventExactFields").hidden = !exact;
-  $("#eventDateField").hidden = exact;
-  form.elements.startsAt.required = exact;
-  form.elements.endsAt.required = exact;
-  form.elements.eventDate.required = !exact;
-  const note = {
-    all_day: "O compromisso ocupa o dia inteiro, sem horário de término.",
-    morning: "Das 06:00 às 12:00.",
-    afternoon: "Das 12:00 às 18:00.",
-    night: "Das 18:00 até a meia-noite.",
-  };
-  $("#eventTimeHelp").hidden = exact;
-  $("#eventTimeHelp").textContent = note[form.elements.timeMode.value] || "";
+function setEventTimeVisibility(){
+  const form=$('#eventForm');
+  const exact=form.elements.timeMode.value==='exact';
+  $('#eventExactFields').hidden=!exact;
+  $('#eventDateField').hidden=exact;
+  form.elements.startsAt.required=exact;
+  form.elements.endsAt.required=exact;
+  form.elements.eventDate.required=!exact;
+  const note={all_day:'O compromisso ocupa o dia inteiro, sem horário de término.',morning:'Das 06:00 às 12:00.',afternoon:'Das 12:00 às 18:00.',night:'Das 18:00 até a meia-noite.'};
+  $('#eventTimeHelp').hidden=exact;
+  $('#eventTimeHelp').textContent=note[form.elements.timeMode.value]||'';
 }
-function eventDateRange(iso, mode) {
-  const [hour, endHour, nextDay] = {
-    all_day: [0, 0, true],
-    morning: [6, 12, false],
-    afternoon: [12, 18, false],
-    night: [18, 0, true],
-  }[mode];
-  const start = new Date(`${iso}T00:00:00`);
-  const end = new Date(`${iso}T00:00:00`);
-  start.setHours(hour, 0, 0, 0);
-  if (nextDay) end.setDate(end.getDate() + 1);
-  end.setHours(endHour, 0, 0, 0);
-  return { start, end };
+function eventDateRange(iso, mode){
+  const [hour,endHour,nextDay]={all_day:[0,0,true],morning:[6,12,false],afternoon:[12,18,false],night:[18,0,true]}[mode];
+  const start=new Date(`${iso}T00:00:00`);
+  const end=new Date(`${iso}T00:00:00`);
+  start.setHours(hour,0,0,0);
+  if(nextDay)end.setDate(end.getDate()+1);
+  end.setHours(endHour,0,0,0);
+  return {start,end};
 }
 function localDateTimeInput(date) {
   const d = new Date(date);
   return `${localISO(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
-function openEvent(event = null, forDate = null) {
-  const form = $("#eventForm");
-  form.reset();
-  $("#eventError").hidden = true;
-  const starts = event
-    ? new Date(event.seriesStartsAt || event.startsAt)
-    : forDate
-      ? fromISO(forDate)
-      : new Date();
-  if (!event && forDate) starts.setHours(9, 0, 0, 0);
-  if (!event && !forDate) {
-    starts.setMinutes(0, 0, 0);
-    starts.setHours(starts.getHours() + 1);
+let editingEvent=null;
+function updateEventEditScope() {
+  const form=$('#eventForm'),scope=form.elements.editScope.value;
+  const recurring=Boolean(editingEvent?.isRecurring);
+  form.querySelector('[data-event-recurrence]').hidden=recurring&&scope==='one';
+  if(recurring){
+    const original=scope==='all';
+    const start=new Date(original?editingEvent.seriesStartsAt:editingEvent.startsAt);
+    const end=new Date(original?editingEvent.seriesEndsAt:editingEvent.endsAt);
+    form.elements.startsAt.value=localDateTimeInput(start);
+    form.elements.endsAt.value=localDateTimeInput(end);
+    form.elements.eventDate.value=localISO(start);
+    if(scope==='future')$('#eventScopeNote').textContent='O horário e a data inicial desta ocorrência serão mantidos ao dividir a série. Você pode alterar os demais detalhes e a frequência futura.';
+    else if(scope==='all')$('#eventScopeNote').textContent='Esta alteração será aplicada à programação da série inteira.';
+    else $('#eventScopeNote').textContent='Esta ocorrência será editada sem alterar as outras datas.';
+    setRepeatFields(form,'event',editingEvent);
+    setEventTimeVisibility();
   }
-  const ends = event
-    ? new Date(event.seriesEndsAt || event.endsAt)
-    : new Date(starts.getTime() + 60 * 60 * 1000);
-  form.elements.id.value = event?.seriesId || event?.id || "";
-  form.elements.title.value = event?.title || "";
-  form.elements.startsAt.value = localDateTimeInput(starts);
-  form.elements.endsAt.value = localDateTimeInput(ends);
-  form.elements.eventDate.value = localISO(starts);
-  form.elements.timeMode.value = event?.timeMode || "exact";
+  $('#eventScopeNote').hidden=!recurring;
+  $('#eventConflictNotice').hidden=true;
+  form.dataset.conflictApproved='';
+  $('#saveEvent').textContent='Salvar compromisso';
+}
+function openEvent(event = null, forDate = null) {
+  const form = $('#eventForm');
+  form.reset();
+  editingEvent=event;
+  form.dataset.conflictApproved='';
+  $('#saveEvent').textContent='Salvar compromisso';
+  $('#eventConflictNotice').hidden=true;
+  $('#eventError').hidden=true;
+  const starts = event ? new Date(event.startsAt) : forDate ? fromISO(forDate) : new Date();
+  if(!event&&forDate)starts.setHours(9,0,0,0);
+  if(!event&&!forDate){starts.setMinutes(0,0,0);starts.setHours(starts.getHours()+1);}
+  const ends=event?new Date(event.endsAt):new Date(starts.getTime()+3600000);
+  form.elements.id.value=event?.seriesId||event?.id||'';
+  form.elements.title.value=event?.title||'';
+  form.elements.startsAt.value=localDateTimeInput(starts);
+  form.elements.endsAt.value=localDateTimeInput(ends);
+  form.elements.eventDate.value=localISO(starts);
+  form.elements.timeMode.value=event?.timeMode||'exact';
   setEventTimeVisibility();
   fillCategorySelect(event?.categoryId);
-  setRepeatFields(form, "event", event);
-  form.elements.notes.value = event?.notes || "";
-  $("#eventDialogTitle").textContent = event
-    ? event.isRecurring
-      ? "Editar série de compromissos"
-      : "Editar compromisso"
-    : "Novo compromisso";
-  $("#deleteEvent").hidden = !event;
-  $("#deleteEvent").dataset.instanceId = event?.id || "";
-  $("#eventDialog").showModal();
+  setRepeatFields(form,'event',event);
+  form.elements.notes.value=event?.notes||'';
+  $('#eventScopeWrap').hidden=!event?.isRecurring;
+  form.elements.editScope.value=event?.isRecurring?'one':'all';
+  $('#eventDialogTitle').textContent=event?'Editar compromisso':'Novo compromisso';
+  $('#deleteEvent').hidden=!event;
+  $('#deleteEvent').dataset.instanceId=event?.id||'';
+  if(event?.isRecurring)updateEventEditScope();
+  else $('#eventScopeNote').hidden=true;
+  $('#eventDialog').showModal();
   form.elements.title.focus();
+}
+async function moveCalendarEvent(eventId,day,time=null) {
+  const ev=state.events.find(e=>e.id===eventId);
+  if(!ev || !/^\d{4}-\d{2}-\d{2}$/.test(day))return;
+  const oldStart=new Date(ev.startsAt),oldEnd=new Date(ev.endsAt);
+  let nextStart,nextEnd;
+  if(ev.timeMode==='exact'){
+    const hour=time||`${String(oldStart.getHours()).padStart(2,'0')}:${String(oldStart.getMinutes()).padStart(2,'0')}`;
+    nextStart=new Date(`${day}T${hour}:00`);
+    nextEnd=new Date(nextStart.getTime()+oldEnd.getTime()-oldStart.getTime());
+  }else{
+    const range=eventDateRange(day,ev.timeMode);
+    nextStart=range.start;nextEnd=range.end;
+  }
+  const body={title:ev.title,startsAt:nextStart.toISOString(),endsAt:nextEnd.toISOString(),timeMode:ev.timeMode,categoryId:ev.categoryId,notes:ev.notes||'',repeat:ev.isRecurring?'none':ev.repeat,repeatDays:ev.isRecurring?[]:ev.repeatDays||[],repeatUntil:ev.isRecurring?null:ev.repeatUntil||null};
+  if(ev.isRecurring)await api(`/api/events/${ev.seriesId}/occurrences/${ev.occurrenceDate}`,{method:'PATCH',body});
+  else await api(`/api/events/${ev.id}`,{method:'PUT',body});
+  await loadCalendarEvents();
+  toast('Compromisso reagendado.');
 }
 
 document.addEventListener("click", async (e) => {
@@ -783,6 +817,11 @@ document.addEventListener("click", async (e) => {
       if (event) openEvent(event);
       return;
     }
+    if(target.dataset.calendarDay){state.calendarCursor=fromISO(target.dataset.calendarDay);state.calendarView='day';await loadCalendarEvents();return;}
+    if (target.dataset.categoryFilter) {
+      state.categoryFilter=target.dataset.categoryFilter==='all'?null:target.dataset.categoryFilter;
+      calendarLegend();renderCalendar();return;
+    }
     if (target.dataset.calendarView) {
       state.calendarView = target.dataset.calendarView;
       await loadCalendarEvents();
@@ -794,7 +833,7 @@ document.addEventListener("click", async (e) => {
       if (state.calendarView === "month") {
         d.setDate(1);
         d.setMonth(d.getMonth() + direction);
-      } else d.setDate(d.getDate() + direction * 7);
+      } else d.setDate(d.getDate() + direction * (state.calendarView==='week'?7:1));
       state.calendarCursor = d;
       await loadCalendarEvents();
       return;
@@ -814,23 +853,9 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (target.dataset.taskDelete) {
-      const task = state.tasks.find((t) => t.id === target.dataset.taskDelete);
-      if (task?.isRecurring) {
-        askDelete({
-          kind: "task",
-          id: task.seriesId,
-          instance: task.occurrenceDate,
-          title: task.title,
-          recurring: true,
-        });
-      } else if (task) {
-        askDelete({
-          kind: "task",
-          id: task.id,
-          title: task.title,
-          recurring: false,
-        });
-      }
+      const task=state.tasks.find(t=>t.id===target.dataset.taskDelete);
+      if(task?.isRecurring){askDelete({kind:'task',id:task.seriesId,instance:task.occurrenceDate,title:task.title,recurring:true});}
+      else if(task){askDelete({kind:'task',id:task.id,title:task.title,recurring:false});}
       return;
     }
     if (target.matches("#newHabit")) {
@@ -866,14 +891,8 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (target.dataset.habitDelete) {
-      const habit = state.habits.find(
-        (h) => h.id === target.dataset.habitDelete,
-      );
-      askDelete({
-        kind: "habit",
-        id: habit?.id,
-        title: habit?.name || "este hábito",
-      });
+      const habit=state.habits.find(h=>h.id===target.dataset.habitDelete);
+      askDelete({kind:'habit',id:habit?.id,title:habit?.name||'este hábito'});
       return;
     }
     if (target.dataset.habitCheck) {
@@ -885,52 +904,15 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (target.id === "deleteEvent") {
-      const event = state.events.find(
-        (ev) => ev.id === target.dataset.instanceId,
-      );
-      if (event)
-        askDelete({
-          kind: "event",
-          id: event.seriesId || event.id,
-          instance: event.occurrenceDate,
-          title: event.title,
-          recurring: event.isRecurring,
-        });
+      const event=state.events.find(ev=>ev.id===target.dataset.instanceId);
+      if(event)askDelete({kind:'event',id:event.seriesId||event.id,instance: event.occurrenceDate,title:event.title,recurring:event.isRecurring});
       return;
     }
-    if (target.id === "manageCategories") {
-      renderCategoryManager();
-      resetCategoryForm();
-      $("#categoryDialog").showModal();
-      return;
-    }
-    if (target.id === "resetCategory") {
-      resetCategoryForm();
-      return;
-    }
-    if (target.dataset.categoryEdit) {
-      const c = state.categories.find(
-        (c) => c.id === target.dataset.categoryEdit,
-      );
-      if (c) {
-        const f = $("#categoryForm");
-        f.elements.id.value = c.id;
-        f.elements.name.value = c.name;
-        f.elements.color.value = c.color;
-      }
-      return;
-    }
-    if (target.dataset.categoryDelete) {
-      const c = state.categories.find(
-        (c) => c.id === target.dataset.categoryDelete,
-      );
-      if (c) askDelete({ kind: "category", id: c.id, title: c.name });
-      return;
-    }
-    if (target.id === "confirmDelete") {
-      await performDeletion();
-      return;
-    }
+    if(target.id==='manageCategories') {renderCategoryManager();resetCategoryForm();$('#categoryDialog').showModal();return;}
+    if(target.id==='resetCategory') {resetCategoryForm();return;}
+    if(target.dataset.categoryEdit) {const c=state.categories.find(c=>c.id===target.dataset.categoryEdit);if(c){const f=$('#categoryForm');f.elements.id.value=c.id;f.elements.name.value=c.name;f.elements.color.value=c.color;}return;}
+    if(target.dataset.categoryDelete) {const c=state.categories.find(c=>c.id===target.dataset.categoryDelete);if(c)askDelete({kind:'category',id:c.id,title:c.name});return;}
+    if(target.id==='confirmDelete'){await performDeletion();return;}
     if (target.id === "logoutBtn") {
       await api("/api/auth/logout", { method: "POST", body: {} });
       window.location.assign("/login");
@@ -949,60 +931,27 @@ $("#habitDaysPicker")?.addEventListener("change", () => {
 
 document.addEventListener("change", async (e) => {
   const target = e.target;
-  if (target.matches(".repeat-select")) {
-    const form = target.form;
-    const kind = form.matches("#taskForm") ? "task" : "event";
-    if (
-      form.elements.repeat.value === "weekly" &&
-      !form.dataset.repeatDaysTouched
-    ) {
-      const iso =
-        kind === "task"
-          ? form.elements.dueDate.value || todayISO()
-          : form.elements.timeMode.value === "exact"
-            ? form.elements.startsAt.value.slice(0, 10)
-            : form.elements.eventDate.value;
-      const day = fromISO(iso || todayISO()).getDay();
-      form
-        .querySelectorAll(`[data-repeat-days="${kind}"] input`)
-        .forEach((input) => (input.checked = Number(input.value) === day));
+  if(target.matches('.repeat-select')){
+    const form=target.form;
+    const kind=form.matches('#taskForm')?'task':'event';
+    if(form.elements.repeat.value==='weekly' && !form.dataset.repeatDaysTouched){
+      const iso=kind==='task'?(form.elements.dueDate.value||todayISO()):(form.elements.timeMode.value==='exact'?form.elements.startsAt.value.slice(0,10):form.elements.eventDate.value);
+      const day=fromISO(iso||todayISO()).getDay();
+      form.querySelectorAll(`[data-repeat-days="${kind}"] input`).forEach(input=>input.checked=Number(input.value)===day);
     }
-    if (
-      kind === "task" &&
-      form.elements.repeat.value !== "none" &&
-      !form.elements.dueDate.value
-    )
-      form.elements.dueDate.value = todayISO();
-    setRepeatVisibility(form, kind);
-    return;
+    if(kind==='task' && form.elements.repeat.value!=='none' && !form.elements.dueDate.value)form.elements.dueDate.value=todayISO();
+    setRepeatVisibility(form,kind);return;
   }
-  if (target.matches("#eventTimeMode")) {
-    if (
-      target.value !== "exact" &&
-      $("#eventDateField").hidden &&
-      formElementsStartDate()
-    )
-      $("#eventForm").elements.eventDate.value = formElementsStartDate();
-    setEventTimeVisibility();
-    return;
+  if(target.matches('#eventTimeMode')){
+    if(target.value!=='exact'&&$('#eventDateField').hidden&&formElementsStartDate())$('#eventForm').elements.eventDate.value=formElementsStartDate();
+    setEventTimeVisibility();return;
   }
-  if (target.matches('input[name="repeatDay"]')) {
-    target.form.dataset.repeatDaysTouched = "1";
-    return;
-  }
+  if(target.matches('input[name="repeatDay"]')){target.form.dataset.repeatDaysTouched='1';return;}
   if (target.matches("[data-task-toggle]")) {
     try {
-      const t = state.tasks.find((t) => t.id === target.dataset.taskToggle);
-      if (t?.isRecurring)
-        await api(
-          `/api/recurring-tasks/${t.seriesId}/${t.occurrenceDate}/toggle`,
-          { method: "PATCH", body: {} },
-        );
-      else
-        await api(`/api/tasks/${target.dataset.taskToggle}/toggle`, {
-          method: "PATCH",
-          body: {},
-        });
+      const t=state.tasks.find(t=>t.id===target.dataset.taskToggle);
+      if(t?.isRecurring)await api(`/api/recurring-tasks/${t.seriesId}/${t.occurrenceDate}/toggle`,{method:'PATCH',body:{}});
+      else await api(`/api/tasks/${target.dataset.taskToggle}/toggle`, {method:'PATCH',body:{}});
       await refreshTasks();
       toast("Tarefa atualizada.");
     } catch (err) {
@@ -1031,7 +980,7 @@ $("#taskForm").addEventListener("submit", async (e) => {
     notes: form.elements.notes.value,
     dueDate: form.elements.dueDate.value || null,
     priority: form.elements.priority.value,
-    ...getRepeatBody(form, "task"),
+    ...getRepeatBody(form,'task'),
   };
   const error = $("#taskError");
   error.hidden = true;
@@ -1048,96 +997,75 @@ $("#taskForm").addEventListener("submit", async (e) => {
     error.hidden = false;
   }
 });
-$("#eventForm").addEventListener("submit", async (e) => {
+$('#eventEditScope')?.addEventListener('change',updateEventEditScope);
+$('#eventForm')?.addEventListener('input',()=>{const f=$('#eventForm');f.dataset.conflictApproved='';$('#eventConflictNotice').hidden=true;$('#saveEvent').textContent='Salvar compromisso';});
+$('#eventForm').addEventListener('submit',async(e)=>{
   e.preventDefault();
-  const form = e.currentTarget;
-  const id = form.elements.id.value;
-  const error = $("#eventError");
-  error.hidden = true;
-  const mode = form.elements.timeMode.value;
-  const range =
-    mode === "exact"
-      ? {
-          start: new Date(form.elements.startsAt.value),
-          end: new Date(form.elements.endsAt.value),
-        }
-      : form.elements.eventDate.value
-        ? eventDateRange(form.elements.eventDate.value, mode)
-        : { start: new Date(NaN), end: new Date(NaN) };
-  const startDate = range.start;
-  const endDate = range.end;
-  if (
-    Number.isNaN(startDate.getTime()) ||
-    Number.isNaN(endDate.getTime()) ||
-    startDate >= endDate
-  ) {
-    error.textContent = "Confira a data e os horários do compromisso.";
-    error.hidden = false;
-    return;
-  }
-  const body = {
-    title: form.elements.title.value,
-    startsAt: startDate.toISOString(),
-    endsAt: endDate.toISOString(),
-    timeMode: mode,
-    categoryId: form.elements.categoryId.value,
-    notes: form.elements.notes.value,
-    ...getRepeatBody(form, "event"),
-  };
-  try {
-    await api(id ? `/api/events/${id}` : "/api/events", {
-      method: id ? "PUT" : "POST",
-      body,
-    });
-    $("#eventDialog").close();
+  const form=e.currentTarget;
+  const id=form.elements.id.value;
+  const scope=editingEvent?.isRecurring?form.elements.editScope.value:'all';
+  const error=$('#eventError');error.hidden=true;
+  const mode=form.elements.timeMode.value;
+  const range=mode==='exact'?{start:new Date(form.elements.startsAt.value),end:new Date(form.elements.endsAt.value)}:form.elements.eventDate.value?eventDateRange(form.elements.eventDate.value,mode):{start:new Date(NaN),end:new Date(NaN)};
+  if(Number.isNaN(range.start.getTime())||Number.isNaN(range.end.getTime())||range.start>=range.end){error.textContent='Confira a data e os horários do compromisso.';error.hidden=false;return;}
+  const repeat=editingEvent?.isRecurring&&scope==='one'?{repeat:'none',repeatDays:[],repeatUntil:null}:getRepeatBody(form,'event');
+  const body={title:form.elements.title.value,startsAt:range.start.toISOString(),endsAt:range.end.toISOString(),timeMode:mode,categoryId:form.elements.categoryId.value,notes:form.elements.notes.value,...repeat};
+  try{
+    const key=JSON.stringify({id,scope,body});
+    if(form.dataset.conflictApproved!==key){
+      const report=await api('/api/events/conflicts',{method:'POST',body:{...body,excludeId:id||null,excludeOccurrence:scope==='one'?editingEvent?.occurrenceDate||null:null}});
+      if(report.count){
+        const warning=$('#eventConflictNotice');
+        warning.textContent=`⚠ Há ${report.count} compromisso(s) com horários sobrepostos, incluindo ${report.conflicts.slice(0,2).map(c=>c.title).join(' e ')}. Revise os horários ou clique em Salvar mesmo assim.`;
+        warning.hidden=false;
+        form.dataset.conflictApproved=key;
+        $('#saveEvent').textContent='Salvar mesmo assim';
+        return;
+      }
+    }
+    let url=id?`/api/events/${id}`:'/api/events';
+    let method=id?'PUT':'POST';
+    if(editingEvent?.isRecurring&&scope==='one'){url=`/api/events/${id}/occurrences/${editingEvent.occurrenceDate}`;method='PATCH';}
+    if(editingEvent?.isRecurring&&scope==='future'){url=`/api/events/${id}/future/${editingEvent.occurrenceDate}`;method='PATCH';}
+    await api(url,{method,body});
+    $('#eventDialog').close();
     await loadCalendarEvents();
-    toast(id ? "Compromisso atualizado!" : "Compromisso criado!");
-  } catch (err) {
-    error.textContent = err.message;
-    error.hidden = false;
-  }
+    toast(id?'Compromisso atualizado!':'Compromisso criado!');
+  }catch(err){error.textContent=err.message;error.hidden=false;}
 });
 
-document.addEventListener("dragstart", (e) => {
-  const task = e.target.closest("[data-task-drag]");
-  if (!task || page !== "calendar") return;
-  e.dataTransfer.effectAllowed = "move";
-  e.dataTransfer.setData("text/plain", task.dataset.taskDrag);
-  task.classList.add("is-dragging");
+document.addEventListener('dragstart',(e)=>{
+  if(page!=='calendar')return;
+  const item=e.target.closest('[data-event-drag],[data-task-drag]');
+  if(!item)return;
+  const ev=item.dataset.eventDrag;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain',ev?`event:${ev}`:`task:${item.dataset.taskDrag}`);
+  item.classList.add('is-dragging');
 });
-document.addEventListener("dragend", (e) => {
-  e.target.closest("[data-task-drag]")?.classList.remove("is-dragging");
-  document
-    .querySelectorAll(".calendar-day.drop-target")
-    .forEach((d) => d.classList.remove("drop-target"));
+document.addEventListener('dragend',(e)=>{
+  e.target.closest('[data-event-drag],[data-task-drag]')?.classList.remove('is-dragging');
+  document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'));
 });
-document.addEventListener("dragover", (e) => {
-  const day = e.target.closest("[data-drop-date]");
-  if (
-    !day ||
-    page !== "calendar" ||
-    !e.dataTransfer.types.includes("text/plain")
-  )
-    return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect = "move";
-  document.querySelectorAll(".calendar-day.drop-target").forEach((d) => {
-    if (d !== day) d.classList.remove("drop-target");
-  });
-  day.classList.add("drop-target");
+document.addEventListener('dragover',(e)=>{
+  const slot=e.target.closest('[data-drop-date]');
+  if(!slot||page!=='calendar'||!e.dataTransfer.types.includes('text/plain'))return;
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.drop-target').forEach(el=>{if(el!==slot)el.classList.remove('drop-target');});
+  slot.classList.add('drop-target');
 });
-document.addEventListener("drop", async (e) => {
-  const day = e.target.closest("[data-drop-date]");
-  if (!day || page !== "calendar") return;
-  e.preventDefault();
-  day.classList.remove("drop-target");
-  const id = e.dataTransfer.getData("text/plain");
-  if (!state.tasks.some((task) => task.id === id)) return;
-  try {
-    await moveTaskToDate(id, day.dataset.dropDate);
-  } catch (error) {
-    showError(error);
-  }
+document.addEventListener('drop',async(e)=>{
+  const target=e.target.closest('[data-drop-date]');
+  if(!target||page!=='calendar')return;
+  e.preventDefault();target.classList.remove('drop-target');
+  const raw=e.dataTransfer.getData('text/plain');
+  const colon=raw.indexOf(':');
+  const kind=colon<0?'task':raw.slice(0,colon);
+  const id=colon<0?raw:raw.slice(colon+1);
+  try{
+    if(kind==='event')await moveCalendarEvent(id,target.dataset.dropDate,target.dataset.dropTime||null);
+    else if(state.tasks.some(t=>t.id===id))await moveTaskToDate(id,target.dataset.dropDate);
+  }catch(err){showError(err);}
 });
 $("#habitEditForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -1221,162 +1149,76 @@ async function init() {
       const recorded = focusHistory.summary.seconds;
       const hours = Math.floor(recorded / 3600);
       const minutes = Math.floor((recorded % 3600) / 60);
-      $("#homeFocusSummary").textContent =
-        `${hours ? `${hours}h ` : ""}${minutes}min de foco em ${focusHistory.summary.sessions} sessões nos últimos 7 dias.`;
+      $("#homeFocusSummary").textContent = `${hours ? `${hours}h ` : ""}${minutes}min de foco em ${focusHistory.summary.sessions} sessões nos últimos 7 dias.`;
     }
     if (page === "tasks") await refreshTasks();
     if (page === "habits") await refreshHabits();
-    if (page === "calendar") {
-      await refreshCategories();
-      await loadCalendarEvents();
-    }
+    if (page === "calendar") {await refreshCategories();await loadCalendarEvents();}
     if (page === "insights") renderInsights(await api("/api/insights"));
   } catch (err) {
     showError(err);
   }
 }
 
-function setRepeatVisibility(form, kind) {
-  const repeating = form.elements.repeat.value !== "none";
-  const weekly = form.elements.repeat.value === "weekly";
-  form.querySelector(`[data-repeat-days="${kind}"]`).hidden = !weekly;
-  form.querySelector(`[data-repeat-until="${kind}"]`).hidden = !repeating;
-  form.querySelector(`[data-repeat-message="${kind}"]`).hidden = !repeating;
+function setRepeatVisibility(form,kind){
+ const repeating=form.elements.repeat.value!=='none';
+ const weekly=form.elements.repeat.value==='weekly';
+ form.querySelector(`[data-repeat-days="${kind}"]`).hidden=!weekly;
+ form.querySelector(`[data-repeat-until="${kind}"]`).hidden=!repeating;
+ form.querySelector(`[data-repeat-message="${kind}"]`).hidden=!repeating;
 }
-function setRepeatFields(form, kind, obj) {
-  form.elements.repeat.value = obj?.repeat || "none";
-  form.elements.repeatUntil.value = obj?.repeatUntil || "";
-  const box = form.querySelector(`[data-repeat-days="${kind}"] .repeat-days`);
-  const iso =
-    kind === "task"
-      ? form.elements.dueDate.value || todayISO()
-      : form.elements.timeMode.value === "exact"
-        ? form.elements.startsAt.value.slice(0, 10)
-        : form.elements.eventDate.value;
-  const days = obj?.repeatDays?.length
-    ? obj.repeatDays
-    : [fromISO(iso || todayISO()).getDay()];
-  form.dataset.repeatDaysTouched = obj?.repeatDays?.length ? "1" : "";
-  box.innerHTML = [1, 2, 3, 4, 5, 6, 0]
-    .map(
-      (day, i) =>
-        `<label><input name="repeatDay" type="checkbox" value="${day}" ${days.includes(day) ? "checked" : ""} /><span>${["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][i]}</span></label>`,
-    )
-    .join("");
-  setRepeatVisibility(form, kind);
+function setRepeatFields(form,kind,obj){
+ form.elements.repeat.value=obj?.repeat||'none';
+ form.elements.repeatUntil.value=obj?.repeatUntil||'';
+ const box=form.querySelector(`[data-repeat-days="${kind}"] .repeat-days`);
+ const iso=kind==='task'?(form.elements.dueDate.value||todayISO()):(form.elements.timeMode.value==='exact'?form.elements.startsAt.value.slice(0,10):form.elements.eventDate.value);
+ const days=obj?.repeatDays?.length?obj.repeatDays:[fromISO(iso||todayISO()).getDay()];
+ form.dataset.repeatDaysTouched=obj?.repeatDays?.length?'1':'';
+ box.innerHTML=[1,2,3,4,5,6,0].map((day,i)=>`<label><input name="repeatDay" type="checkbox" value="${day}" ${days.includes(day)?'checked':''} /><span>${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][i]}</span></label>`).join('');
+ setRepeatVisibility(form,kind);
 }
-function getRepeatBody(form, kind) {
-  const repeat = form.elements.repeat.value;
-  const repeatDays =
-    repeat === "weekly"
-      ? [
-          ...form.querySelectorAll(
-            `[data-repeat-days="${kind}"] input:checked`,
-          ),
-        ].map((el) => Number(el.value))
-      : [];
-  return {
-    repeat,
-    repeatDays,
-    repeatUntil:
-      repeat !== "none" ? form.elements.repeatUntil.value || null : null,
-  };
+function getRepeatBody(form,kind){
+ const repeat=form.elements.repeat.value;
+ const repeatDays=repeat==='weekly'?[...form.querySelectorAll(`[data-repeat-days="${kind}"] input:checked`)].map(el=>Number(el.value)):[];
+ return {repeat,repeatDays,repeatUntil:repeat!=='none'?(form.elements.repeatUntil.value||null):null};
 }
-function resetCategoryForm() {
-  const f = $("#categoryForm");
-  f.reset();
-  f.elements.id.value = "";
-  $("#categoryError").hidden = true;
+function resetCategoryForm(){const f=$('#categoryForm');f.reset();f.elements.id.value='';$('#categoryError').hidden=true;}
+let requestedDeletion=null;
+function askDelete(item){
+ if(!item.id)return;
+ requestedDeletion=item;
+ $('#confirmTitle').textContent=item.kind==='habit'?'Excluir hábito?':item.kind==='event'?'Excluir compromisso?':item.kind==='category'?'Excluir bloco?':'Excluir tarefa?';
+ $('#confirmMessage').textContent=item.kind==='habit'?`Deseja excluir “${item.title}”? Todo o histórico deste hábito será apagado.`:item.kind==='category'?`O bloco “${item.title}” será excluído somente se não tiver compromissos associados.`:`Deseja excluir “${item.title}”? Essa ação não poderá ser desfeita.`;
+ $('#deleteScope').hidden=!item.recurring;
+ $('#deleteScope').querySelector('input[value="one"]').checked=true;
+ $('#confirmError').hidden=true;
+ $('#confirmDialog').showModal();
 }
-let requestedDeletion = null;
-function askDelete(item) {
-  if (!item.id) return;
-  requestedDeletion = item;
-  $("#confirmTitle").textContent =
-    item.kind === "habit"
-      ? "Excluir hábito?"
-      : item.kind === "event"
-        ? "Excluir compromisso?"
-        : item.kind === "category"
-          ? "Excluir bloco?"
-          : "Excluir tarefa?";
-  $("#confirmMessage").textContent =
-    item.kind === "habit"
-      ? `Deseja excluir “${item.title}”? Todo o histórico deste hábito será apagado.`
-      : item.kind === "category"
-        ? `O bloco “${item.title}” será excluído somente se não tiver compromissos associados.`
-        : `Deseja excluir “${item.title}”? Essa ação não poderá ser desfeita.`;
-  $("#deleteScope").hidden = !item.recurring;
-  $("#deleteScope").querySelector('input[value="one"]').checked = true;
-  $("#confirmError").hidden = true;
-  $("#confirmDialog").showModal();
+async function performDeletion(){
+ if(!requestedDeletion)return;
+ const item=requestedDeletion;
+ const scope=item.recurring?$('#deleteScope').querySelector('input:checked').value:'series';
+ let url;
+ if(item.kind==='habit')url=`/api/habits/${item.id}`;
+ else if(item.kind==='category')url=`/api/event-categories/${item.id}`;
+ else if(item.kind==='task')url=scope==='one'?`/api/recurring-tasks/${item.id}/${item.instance}`:`/api/tasks/${item.id}`;
+ else url=scope==='one'?`/api/events/${item.id}/occurrences/${item.instance}`:`/api/events/${item.id}`;
+ const err=$('#confirmError');err.hidden=true;
+ try{
+   await api(url,{method:'DELETE'});
+   $('#confirmDialog').close();requestedDeletion=null;
+   if(item.kind==='habit'){await refreshHabits();toast('Hábito excluído.');}
+   else if(item.kind==='category'){await refreshCategories();await loadCalendarEvents();toast('Bloco excluído.');}
+   else if(item.kind==='task'){await refreshTasks();toast('Tarefa excluída.');}
+   else {$('#eventDialog').close();await loadCalendarEvents();toast('Compromisso excluído.');}
+ }catch(e){err.textContent=e.message;err.hidden=false;}
 }
-async function performDeletion() {
-  if (!requestedDeletion) return;
-  const item = requestedDeletion;
-  const scope = item.recurring
-    ? $("#deleteScope").querySelector("input:checked").value
-    : "series";
-  let url;
-  if (item.kind === "habit") url = `/api/habits/${item.id}`;
-  else if (item.kind === "category") url = `/api/event-categories/${item.id}`;
-  else if (item.kind === "task")
-    url =
-      scope === "one"
-        ? `/api/recurring-tasks/${item.id}/${item.instance}`
-        : `/api/tasks/${item.id}`;
-  else
-    url =
-      scope === "one"
-        ? `/api/events/${item.id}/occurrences/${item.instance}`
-        : `/api/events/${item.id}`;
-  const err = $("#confirmError");
-  err.hidden = true;
-  try {
-    await api(url, { method: "DELETE" });
-    $("#confirmDialog").close();
-    requestedDeletion = null;
-    if (item.kind === "habit") {
-      await refreshHabits();
-      toast("Hábito excluído.");
-    } else if (item.kind === "category") {
-      await refreshCategories();
-      await loadCalendarEvents();
-      toast("Bloco excluído.");
-    } else if (item.kind === "task") {
-      await refreshTasks();
-      toast("Tarefa excluída.");
-    } else {
-      $("#eventDialog").close();
-      await loadCalendarEvents();
-      toast("Compromisso excluído.");
-    }
-  } catch (e) {
-    err.textContent = e.message;
-    err.hidden = false;
-  }
-}
-$("#categoryForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const f = e.currentTarget;
-  const id = f.elements.id.value;
-  const error = $("#categoryError");
-  error.hidden = true;
-  try {
-    await api(id ? `/api/event-categories/${id}` : "/api/event-categories", {
-      method: id ? "PUT" : "POST",
-      body: {
-        name: f.elements.name.value.trim(),
-        color: f.elements.color.value,
-      },
-    });
-    await refreshCategories();
-    await loadCalendarEvents();
-    resetCategoryForm();
-    toast(id ? "Bloco atualizado." : "Bloco criado.");
-  } catch (e) {
-    error.textContent = e.message;
-    error.hidden = false;
-  }
+$('#categoryForm')?.addEventListener('submit',async(e)=>{
+ e.preventDefault();const f=e.currentTarget;const id=f.elements.id.value;
+ const error=$('#categoryError');error.hidden=true;
+ try{
+   await api(id?`/api/event-categories/${id}`:'/api/event-categories',{method:id?'PUT':'POST',body:{name:f.elements.name.value.trim(),color:f.elements.color.value}});
+   await refreshCategories();await loadCalendarEvents();resetCategoryForm();toast(id?'Bloco atualizado.':'Bloco criado.');
+ }catch(e){error.textContent=e.message;error.hidden=false;}
 });
 init();
