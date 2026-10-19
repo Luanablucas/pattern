@@ -2122,3 +2122,38 @@ textarea {
   background: #f0eaf8;
   border-color: #e8ddf5;
 }
+
+/* Pattern v0.5 — recorrências, categorias pessoais e confirmação de exclusão */
+.calendar-categories-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+.calendar-categories-row .calendar-legend{flex:1;padding:3px 0;border-top:0}
+.calendar-categories-row .btn{font-size:11px;min-height:33px;padding:7px 12px}
+.cal-legend-item .legend-dot{background:var(--event-accent,#9984a8)}
+.cal-entry.cal-appointment {background:color-mix(in srgb,var(--event-accent,#d68bab) 14%,white);border-left-color:var(--event-accent,#d68bab);color:#54465b}
+.cal-entry.cal-appointment .cal-entry-title{font-weight:700}
+.repeat-badge{display:inline-block;font-size:10px;color:#8265b0;background:#f3edfc;padding:2px 7px;border-radius:6px;margin-left:5px}
+.repeat-weekdays{border:0;padding:0;margin:0}
+.repeat-weekdays legend{font-weight:650;color:#6b6278;font-size:12px;margin-bottom:10px}
+.repeat-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.repeat-days label{font-size:10px;display:flex;gap:5px;align-items:center;justify-content:center;flex-direction:column;background:#faf7fd;border:1px solid #ede7f4;border-radius:9px;padding:8px 2px;cursor:pointer}
+.repeat-days input{width:16px;height:16px;accent-color:#8165c9}
+.category-modal{max-width:570px}
+.category-list{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow:auto;margin:19px 0}
+.category-list-row{display:flex;align-items:center;gap:9px;border:1px solid #efeaf5;border-radius:11px;padding:8px 10px;min-width:0}
+.category-list-row .category-dot{width:15px;height:15px;background:var(--event-accent);border-radius:5px;flex:none}
+.category-list-row strong{flex:1;overflow-wrap:anywhere}
+.category-list-row .mini-button{font-size:14px}
+.category-edit-form{padding-top:17px;border-top:1px solid #f1ecf5}
+.category-edit-form input[type=color]{padding:4px;height:44px;cursor:pointer}
+.confirmation-modal{max-width:425px}
+.confirmation-modal h2{margin:12px 0;font-size:23px}
+.confirmation-modal>p{margin-bottom:20px;line-height:1.6}
+.confirm-mark{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#fff0f1;color:#bd5660;font-size:25px;font-weight:700}
+.delete-scope{border:1px solid #eee8f5;border-radius:12px;padding:13px;margin-bottom:18px}
+.delete-scope legend{font-weight:700;font-size:12px;color:#675672;padding:0 5px}
+.delete-scope label{display:flex;gap:9px;align-items:center;font-size:12px;color:#6b6072;padding:7px 0;cursor:pointer}
+.delete-scope input{width:auto;accent-color:#8165c9}
+.btn-danger{background:#bd5767;color:white}
+.btn-danger:hover{background:#a74355}
+@media (max-width:700px){.repeat-days{gap:3px}.repeat-days label{font-size:9px}.calendar-categories-row{align-items:flex-start}.category-modal{width:calc(100% - 20px)}}
+/* O display:flex dos formulários não deve sobrescrever o atributo HTML hidden. */
+.form-stack [hidden], .modal [hidden] {display:none !important}

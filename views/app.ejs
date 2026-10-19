@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=0.4.0" />
-  <script defer src="/static/js/habit-utils.js?v=0.4.0"></script>
-  <script defer src="/static/js/app.js?v=0.4.0"></script>
+  <link rel="stylesheet" href="/static/css/style.css?v=0.5.0" />
+  <script defer src="/static/js/habit-utils.js?v=0.5.0"></script>
+  <script defer src="/static/js/app.js?v=0.5.0"></script>
 </head>
 <body data-page="<%= page %>">
   <div class="shell">
@@ -72,15 +72,8 @@
               </div>
             </div>
           </div>
-          <div class="calendar-legend" aria-label="Categorias de compromissos">
-            <span class="cal-legend-item"><i class="legend-dot category-study"></i>Estudos</span>
-            <span class="cal-legend-item"><i class="legend-dot category-work"></i>Trabalho</span>
-            <span class="cal-legend-item"><i class="legend-dot category-personal"></i>Pessoal</span>
-            <span class="cal-legend-item"><i class="legend-dot category-health"></i>Saúde</span>
-            <span class="cal-legend-item"><i class="legend-dot category-other"></i>Outros</span>
-            <span class="cal-legend-item"><i class="legend-dot category-task"></i>Tarefas</span>
-          </div>
-          <p class="calendar-help">Selecione o <strong>+</strong> de um dia para criar um compromisso. Arraste tarefas para mudar sua data; no celular, toque na tarefa e edite a data.</p>
+          <div class="calendar-categories-row"><div class="calendar-legend" id="calendarLegend" aria-label="Blocos de compromissos"></div><button type="button" class="btn btn-soft" id="manageCategories">✎ Meus blocos</button></div>
+          <p class="calendar-help">Compromissos e tarefas podem se repetir sem serem hábitos. Selecione o <strong>+</strong> de um dia para criar um compromisso. Arraste tarefas para mudar sua data; no celular, toque na tarefa e edite a data.</p>
           <div class="calendar-scroll" tabindex="0" aria-label="Grade do calendário com rolagem horizontal em telas pequenas">
             <div class="calendar-weekdays" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
             <div id="calendarGrid" class="calendar-grid calendar-month" aria-live="polite"><p class="muted">Carregando agenda...</p></div>
@@ -106,13 +99,22 @@
     </main>
   </div>
 
-  <dialog id="taskDialog" class="modal"><form id="taskForm" class="form-stack"><input type="hidden" name="id" /><div class="modal-title"><div><p class="eyebrow">PLANEJE COM CALMA</p><h2 id="taskDialogTitle">Nova tarefa</h2></div><button type="button" class="dialog-close" data-close="taskDialog" aria-label="Fechar">×</button></div><label>Nome da tarefa<input name="title" required maxlength="160" placeholder="Ex.: Revisar projeto Pattern" /></label><label>Detalhes (opcional)<textarea name="notes" rows="3" maxlength="2000" placeholder="Alguma observação importante?"></textarea></label><div class="modal-fields"><label>Data limite<input type="date" name="dueDate" /></label><label>Prioridade<select name="priority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label></div><p class="error-message" id="taskError" role="alert" hidden></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-close="taskDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar tarefa</button></div></form></dialog>
+  <dialog id="taskDialog" class="modal"><form id="taskForm" class="form-stack"><input type="hidden" name="id" /><div class="modal-title"><div><p class="eyebrow">PLANEJE COM CALMA</p><h2 id="taskDialogTitle">Nova tarefa</h2></div><button type="button" class="dialog-close" data-close="taskDialog" aria-label="Fechar">×</button></div><label>Nome da tarefa<input name="title" required maxlength="160" placeholder="Ex.: Revisar projeto Pattern" /></label><label>Detalhes (opcional)<textarea name="notes" rows="3" maxlength="2000" placeholder="Alguma observação importante?"></textarea></label><div class="modal-fields"><label>Data limite<input type="date" name="dueDate" /></label><label>Prioridade<select name="priority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label></div>
+    <label>Repetir tarefa<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Semanalmente</option><option value="monthly">Todo mês</option></select></label>
+    <fieldset class="repeat-weekdays" data-repeat-days="task" hidden><legend>Repetir nestes dias</legend><div class="repeat-days"></div></fieldset>
+    <label data-repeat-until="task" hidden>Repetir até (opcional)<input type="date" name="repeatUntil" /></label>
+    <p class="muted small repeat-info" data-repeat-message="task" hidden>As alterações de uma tarefa recorrente afetam a série. As realizações de cada dia são registradas separadamente.</p>
+    <p class="error-message" id="taskError" role="alert" hidden></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-close="taskDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar tarefa</button></div></form></dialog>
   <dialog id="eventDialog" class="modal"><form id="eventForm" class="form-stack">
     <input type="hidden" name="id" />
     <div class="modal-title"><div><p class="eyebrow">RESERVE UM TEMPO</p><h2 id="eventDialogTitle">Novo compromisso</h2></div><button type="button" class="dialog-close" data-close="eventDialog" aria-label="Fechar">×</button></div>
     <label>Compromisso<input name="title" required maxlength="160" placeholder="Ex.: Consulta, aula, reunião" /></label>
     <div class="modal-fields"><label>Início<input name="startsAt" type="datetime-local" required /></label><label>Término<input name="endsAt" type="datetime-local" required /></label></div>
-    <label>Categoria<select name="category" required><option value="personal">Pessoal</option><option value="study">Estudos</option><option value="work">Trabalho</option><option value="health">Saúde</option><option value="other">Outros</option></select></label>
+    <label>Bloco do compromisso<select name="categoryId" required></select></label>
+    <label>Repetir compromisso<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Semanalmente</option><option value="monthly">Todo mês</option></select></label>
+    <fieldset class="repeat-weekdays" data-repeat-days="event" hidden><legend>Repetir nestes dias</legend><div class="repeat-days"></div></fieldset>
+    <label data-repeat-until="event" hidden>Repetir até (opcional)<input type="date" name="repeatUntil" /></label>
+    <p class="muted small repeat-info" data-repeat-message="event" hidden>Ao editar um compromisso recorrente, você modifica a série inteira. Para excluir apenas uma data, use o botão Excluir.</p>
     <label>Observações (opcional)<textarea name="notes" rows="2" maxlength="2000" placeholder="Informações para lembrar depois..."></textarea></label>
     <p class="error-message" id="eventError" role="alert" hidden></p>
     <div class="modal-actions event-modal-actions"><button type="button" class="btn btn-danger-outline" id="deleteEvent" hidden>Excluir</button><span class="modal-action-spacer"></span><button type="button" class="btn btn-soft" data-close="eventDialog">Cancelar</button><button type="submit" class="btn btn-primary" id="saveEvent">Salvar compromisso</button></div>
@@ -145,6 +147,24 @@
     <p class="error-message" id="routineError" role="alert" hidden></p>
     <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="routineDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar rotina</button></div>
   </form></dialog>
+  <dialog id="categoryDialog" class="modal category-modal">
+    <div class="modal-title"><div><p class="eyebrow">DEIXE DO SEU JEITO</p><h2>Meus blocos</h2></div><button type="button" class="dialog-close" data-close="categoryDialog" aria-label="Fechar">×</button></div>
+    <p class="muted small">Crie blocos como Amigos, Namoro, Faculdade ou Viagens e escolha a cor de cada um.</p>
+    <div id="categoryList" class="category-list"></div>
+    <form id="categoryForm" class="form-stack category-edit-form">
+      <input type="hidden" name="id" />
+      <div class="modal-fields"><label>Nome do bloco<input type="text" name="name" maxlength="40" placeholder="Ex.: Amigos" required /></label><label>Cor do bloco<input type="color" name="color" value="#9675d5" required /></label></div>
+      <p class="error-message" id="categoryError" role="alert" hidden></p>
+      <div class="modal-actions"><button class="btn btn-soft" type="button" id="resetCategory">Novo bloco</button><button class="btn btn-primary" type="submit">Salvar bloco</button></div>
+    </form>
+  </dialog>
+  <dialog id="confirmDialog" class="modal confirmation-modal" aria-labelledby="confirmTitle">
+    <div class="confirm-mark" aria-hidden="true">!</div>
+    <h2 id="confirmTitle">Excluir item?</h2><p id="confirmMessage" class="muted"></p>
+    <fieldset id="deleteScope" class="delete-scope" hidden><legend>O que você deseja excluir?</legend><label><input type="radio" name="deleteScope" value="one" checked /> Somente esta ocorrência</label><label><input type="radio" name="deleteScope" value="series" /> Toda a série</label></fieldset>
+    <p class="error-message" id="confirmError" role="alert" hidden></p>
+    <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="confirmDialog">Cancelar</button><button type="button" class="btn btn-danger" id="confirmDelete">Sim, excluir</button></div>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

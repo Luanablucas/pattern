@@ -89,3 +89,51 @@ BEGIN
   END IF;
 END $$;
 CREATE INDEX IF NOT EXISTS idx_events_user_end ON events(user_id, ends_at);
+
+-- Pattern v0.5 — recorrências independentes de hábitos e categorias editáveis.
+CREATE TABLE IF NOT EXISTS event_categories (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(40) NOT NULL,
+  color VARCHAR(7) NOT NULL CHECK (color ~ '^#[0-9A-Fa-f]{6}$'),
+  legacy_key VARCHAR(16),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, legacy_key)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_event_categories_unique_name ON event_categories(user_id,lower(name));
+INSERT INTO event_categories(id,user_id,name,color,legacy_key)
+SELECT gen_random_uuid(),u.id,defaults.name,defaults.color,defaults.legacy_key
+FROM users u CROSS JOIN (VALUES
+ ('study','Estudos','#8e77d2'),('work','Trabalho','#73a1cf'),
+ ('personal','Pessoal','#d68bab'),('health','Saúde','#75aa96'),
+ ('other','Outros','#d5a26b')
+) AS defaults(legacy_key,name,color)
+ON CONFLICT DO NOTHING;
+
+ALTER TABLE events ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES event_categories(id) ON DELETE RESTRICT;
+UPDATE events AS e SET category_id=c.id
+FROM event_categories AS c
+WHERE e.category_id IS NULL AND c.user_id=e.user_id AND c.legacy_key=e.category;
+CREATE INDEX IF NOT EXISTS idx_events_category ON events(category_id);
+
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_type VARCHAR(8) NOT NULL DEFAULT 'none';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_days SMALLINT[] NOT NULL DEFAULT '{}'::SMALLINT[];
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recurrence_until DATE;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS recurrence_type VARCHAR(8) NOT NULL DEFAULT 'none';
+ALTER TABLE events ADD COLUMN IF NOT EXISTS recurrence_days SMALLINT[] NOT NULL DEFAULT '{}'::SMALLINT[];
+ALTER TABLE events ADD COLUMN IF NOT EXISTS recurrence_until DATE;
+
+CREATE TABLE IF NOT EXISTS task_occurrences (
+  task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  occurrence_date DATE NOT NULL,
+  completed BOOLEAN NOT NULL DEFAULT FALSE,
+  completed_at TIMESTAMPTZ,
+  cancelled BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY(task_id, occurrence_date)
+);
+CREATE INDEX IF NOT EXISTS idx_task_occurrences_date ON task_occurrences(occurrence_date);
+CREATE TABLE IF NOT EXISTS event_cancellations (
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  occurrence_date DATE NOT NULL,
+  PRIMARY KEY(event_id, occurrence_date)
+);
