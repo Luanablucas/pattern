@@ -205,9 +205,12 @@ function renderDashboard() {
                     month: "short",
                   })
                   .replace(".", "");
-          const timeLabel = event.timeMode && event.timeMode!=='exact'
-            ? eventTimeLabel(event)
-            : ongoing ? "Em andamento" : eventTimeLabel(event);
+          const timeLabel =
+            event.timeMode && event.timeMode !== "exact"
+              ? eventTimeLabel(event)
+              : ongoing
+                ? "Em andamento"
+                : eventTimeLabel(event);
           return `<article class="agenda-item"><div class="agenda-date"><strong>${escapeHTML(dayLabel)}</strong><span>${escapeHTML(timeLabel)}</span></div><div class="agenda-info"><strong>${escapeHTML(event.title)}</strong>${event.notes ? `<span>${escapeHTML(event.notes)}</span>` : ""}</div></article>`;
         })
         .join("")
@@ -384,24 +387,58 @@ function openRoutine(routine = null) {
   f.elements.name.focus();
 }
 
-function displayColor(color){return /^#[0-9a-fA-F]{6}$/.test(color||'') ? color : '#9984a8';}
-function repeatDescription(repeat){return ({daily:'Diária',weekly:'Semanal',monthly:'Mensal'})[repeat]||'';}
-function calendarLegend(){
-  const el=$('#calendarLegend');if(!el)return;
-  el.innerHTML=state.categories.map(c=>`<span class="cal-legend-item" style="--event-accent:${displayColor(c.color)}"><i class="legend-dot"></i>${escapeHTML(c.name)}</span>`).join('')+'<span class="cal-legend-item" style="--event-accent:#9984a8"><i class="legend-dot"></i>Tarefas</span>';
+function displayColor(color) {
+  return /^#[0-9a-fA-F]{6}$/.test(color || "") ? color : "#9984a8";
 }
-function fillCategorySelect(selected){
-  const sel=$('#eventForm').elements.categoryId;
-  sel.innerHTML=state.categories.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');
-  sel.value=selected&&state.categories.some(c=>c.id===selected)?selected:(state.categories.find(c=>c.legacyKey==='personal')||state.categories[0])?.id||'';
+function repeatDescription(repeat) {
+  return (
+    { daily: "Diária", weekly: "Semanal", monthly: "Mensal" }[repeat] || ""
+  );
 }
-function renderCategoryManager(){
- const el=$('#categoryList');
- el.innerHTML=state.categories.length?state.categories.map(c=>`<div class="category-list-row" style="--event-accent:${displayColor(c.color)}"><span class="category-dot"></span><strong>${escapeHTML(c.name)}</strong><button type="button" class="mini-button" data-category-edit="${c.id}" aria-label="Editar ${escapeHTML(c.name)}">✎</button><button type="button" class="mini-button" data-category-delete="${c.id}" aria-label="Excluir ${escapeHTML(c.name)}">×</button></div>`).join(''):empty('Sem blocos','Crie um bloco para classificar seus compromissos.');
+function calendarLegend() {
+  const el = $("#calendarLegend");
+  if (!el) return;
+  el.innerHTML =
+    state.categories
+      .map(
+        (c) =>
+          `<span class="cal-legend-item" style="--event-accent:${displayColor(c.color)}"><i class="legend-dot"></i>${escapeHTML(c.name)}</span>`,
+      )
+      .join("") +
+    '<span class="cal-legend-item" style="--event-accent:#9984a8"><i class="legend-dot"></i>Tarefas</span>';
 }
-async function refreshCategories(){
- state.categories=await api('/api/event-categories');
- if(page==='calendar'){calendarLegend();renderCategoryManager();fillCategorySelect();renderCalendar();}
+function fillCategorySelect(selected) {
+  const sel = $("#eventForm").elements.categoryId;
+  sel.innerHTML = state.categories
+    .map((c) => `<option value="${c.id}">${escapeHTML(c.name)}</option>`)
+    .join("");
+  sel.value =
+    selected && state.categories.some((c) => c.id === selected)
+      ? selected
+      : (
+          state.categories.find((c) => c.legacyKey === "personal") ||
+          state.categories[0]
+        )?.id || "";
+}
+function renderCategoryManager() {
+  const el = $("#categoryList");
+  el.innerHTML = state.categories.length
+    ? state.categories
+        .map(
+          (c) =>
+            `<div class="category-list-row" style="--event-accent:${displayColor(c.color)}"><span class="category-dot"></span><strong>${escapeHTML(c.name)}</strong><button type="button" class="mini-button" data-category-edit="${c.id}" aria-label="Editar ${escapeHTML(c.name)}">✎</button><button type="button" class="mini-button" data-category-delete="${c.id}" aria-label="Excluir ${escapeHTML(c.name)}">×</button></div>`,
+        )
+        .join("")
+    : empty("Sem blocos", "Crie um bloco para classificar seus compromissos.");
+}
+async function refreshCategories() {
+  state.categories = await api("/api/event-categories");
+  if (page === "calendar") {
+    calendarLegend();
+    renderCategoryManager();
+    fillCategorySelect();
+    renderCalendar();
+  }
 }
 
 function calendarDays() {
@@ -468,7 +505,7 @@ function renderCalendar() {
       const hasPlans = tasks.length + events.length > 0;
       const eventCards = events
         .map((event) => {
-          const categoryColor=displayColor(event.categoryColor);
+          const categoryColor = displayColor(event.categoryColor);
           const startingHere = localISO(new Date(event.startsAt)) === date;
           const time = startingHere ? eventTimeLabel(event) : "Continua";
           return `<button class="cal-entry cal-appointment" style="--event-accent:${categoryColor}" type="button" data-event-edit="${event.id}" title="Editar compromisso: ${escapeHTML(event.title)}">
@@ -479,8 +516,8 @@ function renderCalendar() {
         .map(
           (
             task,
-          ) => `<button class="cal-entry cal-task ${task.completed ? "is-complete" : ""}" draggable="${!task.isRecurring}" type="button" ${task.isRecurring ? "" : `data-task-drag="${task.id}"`} data-task-edit="${task.id}" title="${task.isRecurring?"Clique para editar a série":"Arraste para reagendar ou clique para editar"}: ${escapeHTML(task.title)}">
-      <span class="cal-entry-symbol" aria-hidden="true">${task.completed ? "✓" : "☐"}</span><span class="cal-entry-title">${escapeHTML(task.title)}</span>${task.isRecurring?`<span class="cal-entry-time">↻</span>`:""}</button>`,
+          ) => `<button class="cal-entry cal-task ${task.completed ? "is-complete" : ""}" draggable="${!task.isRecurring}" type="button" ${task.isRecurring ? "" : `data-task-drag="${task.id}"`} data-task-edit="${task.id}" title="${task.isRecurring ? "Clique para editar a série" : "Arraste para reagendar ou clique para editar"}: ${escapeHTML(task.title)}">
+      <span class="cal-entry-symbol" aria-hidden="true">${task.completed ? "✓" : "☐"}</span><span class="cal-entry-title">${escapeHTML(task.title)}</span>${task.isRecurring ? `<span class="cal-entry-time">↻</span>` : ""}</button>`,
         )
         .join("");
       const label = d.toLocaleDateString("pt-BR", {
@@ -521,13 +558,17 @@ async function loadCalendarEvents() {
   to.setHours(0, 0, 0, 0);
   $("#calendarFeedback").textContent = "Atualizando compromissos...";
   try {
-    const [events,tasks] = await Promise.all([
-      api(`/api/events?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`),
-      api(`/api/tasks?from=${localISO(from)}&to=${localISO(new Date(to.getTime()-86400000))}`)
+    const [events, tasks] = await Promise.all([
+      api(
+        `/api/events?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`,
+      ),
+      api(
+        `/api/tasks?from=${localISO(from)}&to=${localISO(new Date(to.getTime() - 86400000))}`,
+      ),
     ]);
     if (request !== state.calendarRequest) return;
     state.events = events;
-    state.tasks=tasks;
+    state.tasks = tasks;
     renderCalendar();
     $("#calendarFeedback").textContent = "";
   } catch (error) {
@@ -581,7 +622,9 @@ function renderInsights(data) {
   }
 }
 async function refreshTasks() {
-  state.tasks = await api(page==='tasks'?'/api/tasks?list=1':'/api/tasks');
+  state.tasks = await api(
+    page === "tasks" ? "/api/tasks?list=1" : "/api/tasks",
+  );
   if (page === "tasks") renderTasks();
   if (page === "app") renderDashboard();
   if (page === "calendar") renderCalendar();
@@ -604,39 +647,68 @@ function openTask(task = null, { forToday = false } = {}) {
   form.elements.id.value = task?.seriesId || task?.id || "";
   form.elements.title.value = task?.title || "";
   form.elements.notes.value = task?.notes || "";
-  form.elements.dueDate.value = forToday ? todayISO() : task?.seriesDueDate || task?.dueDate || "";
+  form.elements.dueDate.value = forToday
+    ? todayISO()
+    : task?.seriesDueDate || task?.dueDate || "";
   form.elements.priority.value = task?.priority || "medium";
-  setRepeatFields(form,'task',task);
-  $("#taskDialogTitle").textContent = task ? (task.isRecurring?'Editar série de tarefas':'Editar tarefa') : "Nova tarefa";
+  setRepeatFields(form, "task", task);
+  $("#taskDialogTitle").textContent = task
+    ? task.isRecurring
+      ? "Editar série de tarefas"
+      : "Editar tarefa"
+    : "Nova tarefa";
   $("#taskError").hidden = true;
   dialog.showModal();
   form.elements.title.focus();
 }
-function formElementsStartDate(){return $('#eventForm').elements.startsAt.value.slice(0,10);}
+function formElementsStartDate() {
+  return $("#eventForm").elements.startsAt.value.slice(0, 10);
+}
 function eventTimeLabel(event) {
-  const labels={all_day:'Dia inteiro',morning:'Manhã',afternoon:'Tarde',night:'Noite'};
-  return labels[event.timeMode] || new Date(event.startsAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const labels = {
+    all_day: "Dia inteiro",
+    morning: "Manhã",
+    afternoon: "Tarde",
+    night: "Noite",
+  };
+  return (
+    labels[event.timeMode] ||
+    new Date(event.startsAt).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  );
 }
-function setEventTimeVisibility(){
-  const form=$('#eventForm');
-  const exact=form.elements.timeMode.value==='exact';
-  $('#eventExactFields').hidden=!exact;
-  $('#eventDateField').hidden=exact;
-  form.elements.startsAt.required=exact;
-  form.elements.endsAt.required=exact;
-  form.elements.eventDate.required=!exact;
-  const note={all_day:'O compromisso ocupa o dia inteiro, sem horário de término.',morning:'Das 06:00 às 12:00.',afternoon:'Das 12:00 às 18:00.',night:'Das 18:00 até a meia-noite.'};
-  $('#eventTimeHelp').hidden=exact;
-  $('#eventTimeHelp').textContent=note[form.elements.timeMode.value]||'';
+function setEventTimeVisibility() {
+  const form = $("#eventForm");
+  const exact = form.elements.timeMode.value === "exact";
+  $("#eventExactFields").hidden = !exact;
+  $("#eventDateField").hidden = exact;
+  form.elements.startsAt.required = exact;
+  form.elements.endsAt.required = exact;
+  form.elements.eventDate.required = !exact;
+  const note = {
+    all_day: "O compromisso ocupa o dia inteiro, sem horário de término.",
+    morning: "Das 06:00 às 12:00.",
+    afternoon: "Das 12:00 às 18:00.",
+    night: "Das 18:00 até a meia-noite.",
+  };
+  $("#eventTimeHelp").hidden = exact;
+  $("#eventTimeHelp").textContent = note[form.elements.timeMode.value] || "";
 }
-function eventDateRange(iso, mode){
-  const [hour,endHour,nextDay]={all_day:[0,0,true],morning:[6,12,false],afternoon:[12,18,false],night:[18,0,true]}[mode];
-  const start=new Date(`${iso}T00:00:00`);
-  const end=new Date(`${iso}T00:00:00`);
-  start.setHours(hour,0,0,0);
-  if(nextDay)end.setDate(end.getDate()+1);
-  end.setHours(endHour,0,0,0);
-  return {start,end};
+function eventDateRange(iso, mode) {
+  const [hour, endHour, nextDay] = {
+    all_day: [0, 0, true],
+    morning: [6, 12, false],
+    afternoon: [12, 18, false],
+    night: [18, 0, true],
+  }[mode];
+  const start = new Date(`${iso}T00:00:00`);
+  const end = new Date(`${iso}T00:00:00`);
+  start.setHours(hour, 0, 0, 0);
+  if (nextDay) end.setDate(end.getDate() + 1);
+  end.setHours(endHour, 0, 0, 0);
+  return { start, end };
 }
 function localDateTimeInput(date) {
   const d = new Date(date);
@@ -664,15 +736,18 @@ function openEvent(event = null, forDate = null) {
   form.elements.startsAt.value = localDateTimeInput(starts);
   form.elements.endsAt.value = localDateTimeInput(ends);
   form.elements.eventDate.value = localISO(starts);
-  form.elements.timeMode.value = event?.timeMode || 'exact';
+  form.elements.timeMode.value = event?.timeMode || "exact";
   setEventTimeVisibility();
-  fillCategorySelect(event?.categoryId);setRepeatFields(form,'event',event);
+  fillCategorySelect(event?.categoryId);
+  setRepeatFields(form, "event", event);
   form.elements.notes.value = event?.notes || "";
   $("#eventDialogTitle").textContent = event
-    ? (event.isRecurring?'Editar série de compromissos':'Editar compromisso')
+    ? event.isRecurring
+      ? "Editar série de compromissos"
+      : "Editar compromisso"
     : "Novo compromisso";
   $("#deleteEvent").hidden = !event;
-  $('#deleteEvent').dataset.instanceId=event?.id||'';
+  $("#deleteEvent").dataset.instanceId = event?.id || "";
   $("#eventDialog").showModal();
   form.elements.title.focus();
 }
@@ -739,9 +814,23 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (target.dataset.taskDelete) {
-      const task=state.tasks.find(t=>t.id===target.dataset.taskDelete);
-      if(task?.isRecurring){askDelete({kind:'task',id:task.seriesId,instance:task.occurrenceDate,title:task.title,recurring:true});}
-      else if(task){askDelete({kind:'task',id:task.id,title:task.title,recurring:false});}
+      const task = state.tasks.find((t) => t.id === target.dataset.taskDelete);
+      if (task?.isRecurring) {
+        askDelete({
+          kind: "task",
+          id: task.seriesId,
+          instance: task.occurrenceDate,
+          title: task.title,
+          recurring: true,
+        });
+      } else if (task) {
+        askDelete({
+          kind: "task",
+          id: task.id,
+          title: task.title,
+          recurring: false,
+        });
+      }
       return;
     }
     if (target.matches("#newHabit")) {
@@ -777,8 +866,14 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (target.dataset.habitDelete) {
-      const habit=state.habits.find(h=>h.id===target.dataset.habitDelete);
-      askDelete({kind:'habit',id:habit?.id,title:habit?.name||'este hábito'});
+      const habit = state.habits.find(
+        (h) => h.id === target.dataset.habitDelete,
+      );
+      askDelete({
+        kind: "habit",
+        id: habit?.id,
+        title: habit?.name || "este hábito",
+      });
       return;
     }
     if (target.dataset.habitCheck) {
@@ -790,15 +885,52 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (target.id === "deleteEvent") {
-      const event=state.events.find(ev=>ev.id===target.dataset.instanceId);
-      if(event)askDelete({kind:'event',id:event.seriesId||event.id,instance: event.occurrenceDate,title:event.title,recurring:event.isRecurring});
+      const event = state.events.find(
+        (ev) => ev.id === target.dataset.instanceId,
+      );
+      if (event)
+        askDelete({
+          kind: "event",
+          id: event.seriesId || event.id,
+          instance: event.occurrenceDate,
+          title: event.title,
+          recurring: event.isRecurring,
+        });
       return;
     }
-    if(target.id==='manageCategories') {renderCategoryManager();resetCategoryForm();$('#categoryDialog').showModal();return;}
-    if(target.id==='resetCategory') {resetCategoryForm();return;}
-    if(target.dataset.categoryEdit) {const c=state.categories.find(c=>c.id===target.dataset.categoryEdit);if(c){const f=$('#categoryForm');f.elements.id.value=c.id;f.elements.name.value=c.name;f.elements.color.value=c.color;}return;}
-    if(target.dataset.categoryDelete) {const c=state.categories.find(c=>c.id===target.dataset.categoryDelete);if(c)askDelete({kind:'category',id:c.id,title:c.name});return;}
-    if(target.id==='confirmDelete'){await performDeletion();return;}
+    if (target.id === "manageCategories") {
+      renderCategoryManager();
+      resetCategoryForm();
+      $("#categoryDialog").showModal();
+      return;
+    }
+    if (target.id === "resetCategory") {
+      resetCategoryForm();
+      return;
+    }
+    if (target.dataset.categoryEdit) {
+      const c = state.categories.find(
+        (c) => c.id === target.dataset.categoryEdit,
+      );
+      if (c) {
+        const f = $("#categoryForm");
+        f.elements.id.value = c.id;
+        f.elements.name.value = c.name;
+        f.elements.color.value = c.color;
+      }
+      return;
+    }
+    if (target.dataset.categoryDelete) {
+      const c = state.categories.find(
+        (c) => c.id === target.dataset.categoryDelete,
+      );
+      if (c) askDelete({ kind: "category", id: c.id, title: c.name });
+      return;
+    }
+    if (target.id === "confirmDelete") {
+      await performDeletion();
+      return;
+    }
     if (target.id === "logoutBtn") {
       await api("/api/auth/logout", { method: "POST", body: {} });
       window.location.assign("/login");
@@ -817,27 +949,60 @@ $("#habitDaysPicker")?.addEventListener("change", () => {
 
 document.addEventListener("change", async (e) => {
   const target = e.target;
-  if(target.matches('.repeat-select')){
-    const form=target.form;
-    const kind=form.matches('#taskForm')?'task':'event';
-    if(form.elements.repeat.value==='weekly' && !form.dataset.repeatDaysTouched){
-      const iso=kind==='task'?(form.elements.dueDate.value||todayISO()):(form.elements.timeMode.value==='exact'?form.elements.startsAt.value.slice(0,10):form.elements.eventDate.value);
-      const day=fromISO(iso||todayISO()).getDay();
-      form.querySelectorAll(`[data-repeat-days="${kind}"] input`).forEach(input=>input.checked=Number(input.value)===day);
+  if (target.matches(".repeat-select")) {
+    const form = target.form;
+    const kind = form.matches("#taskForm") ? "task" : "event";
+    if (
+      form.elements.repeat.value === "weekly" &&
+      !form.dataset.repeatDaysTouched
+    ) {
+      const iso =
+        kind === "task"
+          ? form.elements.dueDate.value || todayISO()
+          : form.elements.timeMode.value === "exact"
+            ? form.elements.startsAt.value.slice(0, 10)
+            : form.elements.eventDate.value;
+      const day = fromISO(iso || todayISO()).getDay();
+      form
+        .querySelectorAll(`[data-repeat-days="${kind}"] input`)
+        .forEach((input) => (input.checked = Number(input.value) === day));
     }
-    if(kind==='task' && form.elements.repeat.value!=='none' && !form.elements.dueDate.value)form.elements.dueDate.value=todayISO();
-    setRepeatVisibility(form,kind);return;
+    if (
+      kind === "task" &&
+      form.elements.repeat.value !== "none" &&
+      !form.elements.dueDate.value
+    )
+      form.elements.dueDate.value = todayISO();
+    setRepeatVisibility(form, kind);
+    return;
   }
-  if(target.matches('#eventTimeMode')){
-    if(target.value!=='exact'&&$('#eventDateField').hidden&&formElementsStartDate())$('#eventForm').elements.eventDate.value=formElementsStartDate();
-    setEventTimeVisibility();return;
+  if (target.matches("#eventTimeMode")) {
+    if (
+      target.value !== "exact" &&
+      $("#eventDateField").hidden &&
+      formElementsStartDate()
+    )
+      $("#eventForm").elements.eventDate.value = formElementsStartDate();
+    setEventTimeVisibility();
+    return;
   }
-  if(target.matches('input[name="repeatDay"]')){target.form.dataset.repeatDaysTouched='1';return;}
+  if (target.matches('input[name="repeatDay"]')) {
+    target.form.dataset.repeatDaysTouched = "1";
+    return;
+  }
   if (target.matches("[data-task-toggle]")) {
     try {
-      const t=state.tasks.find(t=>t.id===target.dataset.taskToggle);
-      if(t?.isRecurring)await api(`/api/recurring-tasks/${t.seriesId}/${t.occurrenceDate}/toggle`,{method:'PATCH',body:{}});
-      else await api(`/api/tasks/${target.dataset.taskToggle}/toggle`, {method:'PATCH',body:{}});
+      const t = state.tasks.find((t) => t.id === target.dataset.taskToggle);
+      if (t?.isRecurring)
+        await api(
+          `/api/recurring-tasks/${t.seriesId}/${t.occurrenceDate}/toggle`,
+          { method: "PATCH", body: {} },
+        );
+      else
+        await api(`/api/tasks/${target.dataset.taskToggle}/toggle`, {
+          method: "PATCH",
+          body: {},
+        });
       await refreshTasks();
       toast("Tarefa atualizada.");
     } catch (err) {
@@ -866,7 +1031,7 @@ $("#taskForm").addEventListener("submit", async (e) => {
     notes: form.elements.notes.value,
     dueDate: form.elements.dueDate.value || null,
     priority: form.elements.priority.value,
-    ...getRepeatBody(form,'task'),
+    ...getRepeatBody(form, "task"),
   };
   const error = $("#taskError");
   error.hidden = true;
@@ -889,13 +1054,23 @@ $("#eventForm").addEventListener("submit", async (e) => {
   const id = form.elements.id.value;
   const error = $("#eventError");
   error.hidden = true;
-  const mode=form.elements.timeMode.value;
-  const range=mode==='exact'
-    ? {start:new Date(form.elements.startsAt.value),end:new Date(form.elements.endsAt.value)}
-    : form.elements.eventDate.value ? eventDateRange(form.elements.eventDate.value,mode) : {start:new Date(NaN),end:new Date(NaN)};
-  const startDate=range.start;
-  const endDate=range.end;
-  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || startDate >= endDate) {
+  const mode = form.elements.timeMode.value;
+  const range =
+    mode === "exact"
+      ? {
+          start: new Date(form.elements.startsAt.value),
+          end: new Date(form.elements.endsAt.value),
+        }
+      : form.elements.eventDate.value
+        ? eventDateRange(form.elements.eventDate.value, mode)
+        : { start: new Date(NaN), end: new Date(NaN) };
+  const startDate = range.start;
+  const endDate = range.end;
+  if (
+    Number.isNaN(startDate.getTime()) ||
+    Number.isNaN(endDate.getTime()) ||
+    startDate >= endDate
+  ) {
     error.textContent = "Confira a data e os horários do compromisso.";
     error.hidden = false;
     return;
@@ -904,10 +1079,10 @@ $("#eventForm").addEventListener("submit", async (e) => {
     title: form.elements.title.value,
     startsAt: startDate.toISOString(),
     endsAt: endDate.toISOString(),
-    timeMode:mode,
-    categoryId:form.elements.categoryId.value,
+    timeMode: mode,
+    categoryId: form.elements.categoryId.value,
     notes: form.elements.notes.value,
-    ...getRepeatBody(form,'event'),
+    ...getRepeatBody(form, "event"),
   };
   try {
     await api(id ? `/api/events/${id}` : "/api/events", {
@@ -1046,76 +1221,162 @@ async function init() {
       const recorded = focusHistory.summary.seconds;
       const hours = Math.floor(recorded / 3600);
       const minutes = Math.floor((recorded % 3600) / 60);
-      $("#homeFocusSummary").textContent = `${hours ? `${hours}h ` : ""}${minutes}min de foco em ${focusHistory.summary.sessions} sessões nos últimos 7 dias.`;
+      $("#homeFocusSummary").textContent =
+        `${hours ? `${hours}h ` : ""}${minutes}min de foco em ${focusHistory.summary.sessions} sessões nos últimos 7 dias.`;
     }
     if (page === "tasks") await refreshTasks();
     if (page === "habits") await refreshHabits();
-    if (page === "calendar") {await refreshCategories();await loadCalendarEvents();}
+    if (page === "calendar") {
+      await refreshCategories();
+      await loadCalendarEvents();
+    }
     if (page === "insights") renderInsights(await api("/api/insights"));
   } catch (err) {
     showError(err);
   }
 }
 
-function setRepeatVisibility(form,kind){
- const repeating=form.elements.repeat.value!=='none';
- const weekly=form.elements.repeat.value==='weekly';
- form.querySelector(`[data-repeat-days="${kind}"]`).hidden=!weekly;
- form.querySelector(`[data-repeat-until="${kind}"]`).hidden=!repeating;
- form.querySelector(`[data-repeat-message="${kind}"]`).hidden=!repeating;
+function setRepeatVisibility(form, kind) {
+  const repeating = form.elements.repeat.value !== "none";
+  const weekly = form.elements.repeat.value === "weekly";
+  form.querySelector(`[data-repeat-days="${kind}"]`).hidden = !weekly;
+  form.querySelector(`[data-repeat-until="${kind}"]`).hidden = !repeating;
+  form.querySelector(`[data-repeat-message="${kind}"]`).hidden = !repeating;
 }
-function setRepeatFields(form,kind,obj){
- form.elements.repeat.value=obj?.repeat||'none';
- form.elements.repeatUntil.value=obj?.repeatUntil||'';
- const box=form.querySelector(`[data-repeat-days="${kind}"] .repeat-days`);
- const iso=kind==='task'?(form.elements.dueDate.value||todayISO()):(form.elements.timeMode.value==='exact'?form.elements.startsAt.value.slice(0,10):form.elements.eventDate.value);
- const days=obj?.repeatDays?.length?obj.repeatDays:[fromISO(iso||todayISO()).getDay()];
- form.dataset.repeatDaysTouched=obj?.repeatDays?.length?'1':'';
- box.innerHTML=[1,2,3,4,5,6,0].map((day,i)=>`<label><input name="repeatDay" type="checkbox" value="${day}" ${days.includes(day)?'checked':''} /><span>${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][i]}</span></label>`).join('');
- setRepeatVisibility(form,kind);
+function setRepeatFields(form, kind, obj) {
+  form.elements.repeat.value = obj?.repeat || "none";
+  form.elements.repeatUntil.value = obj?.repeatUntil || "";
+  const box = form.querySelector(`[data-repeat-days="${kind}"] .repeat-days`);
+  const iso =
+    kind === "task"
+      ? form.elements.dueDate.value || todayISO()
+      : form.elements.timeMode.value === "exact"
+        ? form.elements.startsAt.value.slice(0, 10)
+        : form.elements.eventDate.value;
+  const days = obj?.repeatDays?.length
+    ? obj.repeatDays
+    : [fromISO(iso || todayISO()).getDay()];
+  form.dataset.repeatDaysTouched = obj?.repeatDays?.length ? "1" : "";
+  box.innerHTML = [1, 2, 3, 4, 5, 6, 0]
+    .map(
+      (day, i) =>
+        `<label><input name="repeatDay" type="checkbox" value="${day}" ${days.includes(day) ? "checked" : ""} /><span>${["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][i]}</span></label>`,
+    )
+    .join("");
+  setRepeatVisibility(form, kind);
 }
-function getRepeatBody(form,kind){
- const repeat=form.elements.repeat.value;
- const repeatDays=repeat==='weekly'?[...form.querySelectorAll(`[data-repeat-days="${kind}"] input:checked`)].map(el=>Number(el.value)):[];
- return {repeat,repeatDays,repeatUntil:repeat!=='none'?(form.elements.repeatUntil.value||null):null};
+function getRepeatBody(form, kind) {
+  const repeat = form.elements.repeat.value;
+  const repeatDays =
+    repeat === "weekly"
+      ? [
+          ...form.querySelectorAll(
+            `[data-repeat-days="${kind}"] input:checked`,
+          ),
+        ].map((el) => Number(el.value))
+      : [];
+  return {
+    repeat,
+    repeatDays,
+    repeatUntil:
+      repeat !== "none" ? form.elements.repeatUntil.value || null : null,
+  };
 }
-function resetCategoryForm(){const f=$('#categoryForm');f.reset();f.elements.id.value='';$('#categoryError').hidden=true;}
-let requestedDeletion=null;
-function askDelete(item){
- if(!item.id)return;
- requestedDeletion=item;
- $('#confirmTitle').textContent=item.kind==='habit'?'Excluir hábito?':item.kind==='event'?'Excluir compromisso?':item.kind==='category'?'Excluir bloco?':'Excluir tarefa?';
- $('#confirmMessage').textContent=item.kind==='habit'?`Deseja excluir “${item.title}”? Todo o histórico deste hábito será apagado.`:item.kind==='category'?`O bloco “${item.title}” será excluído somente se não tiver compromissos associados.`:`Deseja excluir “${item.title}”? Essa ação não poderá ser desfeita.`;
- $('#deleteScope').hidden=!item.recurring;
- $('#deleteScope').querySelector('input[value="one"]').checked=true;
- $('#confirmError').hidden=true;
- $('#confirmDialog').showModal();
+function resetCategoryForm() {
+  const f = $("#categoryForm");
+  f.reset();
+  f.elements.id.value = "";
+  $("#categoryError").hidden = true;
 }
-async function performDeletion(){
- if(!requestedDeletion)return;
- const item=requestedDeletion;
- const scope=item.recurring?$('#deleteScope').querySelector('input:checked').value:'series';
- let url;
- if(item.kind==='habit')url=`/api/habits/${item.id}`;
- else if(item.kind==='category')url=`/api/event-categories/${item.id}`;
- else if(item.kind==='task')url=scope==='one'?`/api/recurring-tasks/${item.id}/${item.instance}`:`/api/tasks/${item.id}`;
- else url=scope==='one'?`/api/events/${item.id}/occurrences/${item.instance}`:`/api/events/${item.id}`;
- const err=$('#confirmError');err.hidden=true;
- try{
-   await api(url,{method:'DELETE'});
-   $('#confirmDialog').close();requestedDeletion=null;
-   if(item.kind==='habit'){await refreshHabits();toast('Hábito excluído.');}
-   else if(item.kind==='category'){await refreshCategories();await loadCalendarEvents();toast('Bloco excluído.');}
-   else if(item.kind==='task'){await refreshTasks();toast('Tarefa excluída.');}
-   else {$('#eventDialog').close();await loadCalendarEvents();toast('Compromisso excluído.');}
- }catch(e){err.textContent=e.message;err.hidden=false;}
+let requestedDeletion = null;
+function askDelete(item) {
+  if (!item.id) return;
+  requestedDeletion = item;
+  $("#confirmTitle").textContent =
+    item.kind === "habit"
+      ? "Excluir hábito?"
+      : item.kind === "event"
+        ? "Excluir compromisso?"
+        : item.kind === "category"
+          ? "Excluir bloco?"
+          : "Excluir tarefa?";
+  $("#confirmMessage").textContent =
+    item.kind === "habit"
+      ? `Deseja excluir “${item.title}”? Todo o histórico deste hábito será apagado.`
+      : item.kind === "category"
+        ? `O bloco “${item.title}” será excluído somente se não tiver compromissos associados.`
+        : `Deseja excluir “${item.title}”? Essa ação não poderá ser desfeita.`;
+  $("#deleteScope").hidden = !item.recurring;
+  $("#deleteScope").querySelector('input[value="one"]').checked = true;
+  $("#confirmError").hidden = true;
+  $("#confirmDialog").showModal();
 }
-$('#categoryForm')?.addEventListener('submit',async(e)=>{
- e.preventDefault();const f=e.currentTarget;const id=f.elements.id.value;
- const error=$('#categoryError');error.hidden=true;
- try{
-   await api(id?`/api/event-categories/${id}`:'/api/event-categories',{method:id?'PUT':'POST',body:{name:f.elements.name.value.trim(),color:f.elements.color.value}});
-   await refreshCategories();await loadCalendarEvents();resetCategoryForm();toast(id?'Bloco atualizado.':'Bloco criado.');
- }catch(e){error.textContent=e.message;error.hidden=false;}
+async function performDeletion() {
+  if (!requestedDeletion) return;
+  const item = requestedDeletion;
+  const scope = item.recurring
+    ? $("#deleteScope").querySelector("input:checked").value
+    : "series";
+  let url;
+  if (item.kind === "habit") url = `/api/habits/${item.id}`;
+  else if (item.kind === "category") url = `/api/event-categories/${item.id}`;
+  else if (item.kind === "task")
+    url =
+      scope === "one"
+        ? `/api/recurring-tasks/${item.id}/${item.instance}`
+        : `/api/tasks/${item.id}`;
+  else
+    url =
+      scope === "one"
+        ? `/api/events/${item.id}/occurrences/${item.instance}`
+        : `/api/events/${item.id}`;
+  const err = $("#confirmError");
+  err.hidden = true;
+  try {
+    await api(url, { method: "DELETE" });
+    $("#confirmDialog").close();
+    requestedDeletion = null;
+    if (item.kind === "habit") {
+      await refreshHabits();
+      toast("Hábito excluído.");
+    } else if (item.kind === "category") {
+      await refreshCategories();
+      await loadCalendarEvents();
+      toast("Bloco excluído.");
+    } else if (item.kind === "task") {
+      await refreshTasks();
+      toast("Tarefa excluída.");
+    } else {
+      $("#eventDialog").close();
+      await loadCalendarEvents();
+      toast("Compromisso excluído.");
+    }
+  } catch (e) {
+    err.textContent = e.message;
+    err.hidden = false;
+  }
+}
+$("#categoryForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.currentTarget;
+  const id = f.elements.id.value;
+  const error = $("#categoryError");
+  error.hidden = true;
+  try {
+    await api(id ? `/api/event-categories/${id}` : "/api/event-categories", {
+      method: id ? "PUT" : "POST",
+      body: {
+        name: f.elements.name.value.trim(),
+        color: f.elements.color.value,
+      },
+    });
+    await refreshCategories();
+    await loadCalendarEvents();
+    resetCategoryForm();
+    toast(id ? "Bloco atualizado." : "Bloco criado.");
+  } catch (e) {
+    error.textContent = e.message;
+    error.hidden = false;
+  }
 });
 init();
