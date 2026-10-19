@@ -30,6 +30,37 @@ CREATE TABLE IF NOT EXISTS habits (
 );
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
 
+-- v0.4: rotinas agrupam hábitos; a exclusão de uma rotina não apaga os hábitos.
+CREATE TABLE IF NOT EXISTS routines (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  period VARCHAR(10) NOT NULL DEFAULT 'flexible' CHECK (period IN ('morning','evening','flexible')),
+  description VARCHAR(240) NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_routines_user ON routines(user_id);
+
+-- Migração incremental: os hábitos existentes continuam diários e sem rotina.
+ALTER TABLE habits ADD COLUMN IF NOT EXISTS schedule_days SMALLINT[] NOT NULL DEFAULT ARRAY[0,1,2,3,4,5,6]::SMALLINT[];
+ALTER TABLE habits ADD COLUMN IF NOT EXISTS preferred_time TIME;
+ALTER TABLE habits ADD COLUMN IF NOT EXISTS goal_per_week SMALLINT NOT NULL DEFAULT 7;
+ALTER TABLE habits ADD COLUMN IF NOT EXISTS routine_id UUID REFERENCES routines(id) ON DELETE SET NULL;
+ALTER TABLE habits ADD COLUMN IF NOT EXISTS position INTEGER NOT NULL DEFAULT 0;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'habits_schedule_days_check' AND conrelid='habits'::regclass) THEN
+    ALTER TABLE habits ADD CONSTRAINT habits_schedule_days_check CHECK (
+      cardinality(schedule_days) BETWEEN 1 AND 7 AND
+      schedule_days <@ ARRAY[0,1,2,3,4,5,6]::SMALLINT[]
+    );
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'habits_goal_week_check' AND conrelid='habits'::regclass) THEN
+    ALTER TABLE habits ADD CONSTRAINT habits_goal_week_check CHECK (goal_per_week BETWEEN 1 AND 7 AND goal_per_week <= cardinality(schedule_days));
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_habits_user_routine ON habits(user_id, routine_id);
+
 CREATE TABLE IF NOT EXISTS habit_entries (
   habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
   entry_date DATE NOT NULL,

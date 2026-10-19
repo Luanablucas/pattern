@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=0.3.0" />
-  <script defer src="/static/js/app.js?v=0.3.0"></script>
+  <link rel="stylesheet" href="/static/css/style.css?v=0.4.0" />
+  <script defer src="/static/js/habit-utils.js?v=0.4.0"></script>
+  <script defer src="/static/js/app.js?v=0.4.0"></script>
 </head>
 <body data-page="<%= page %>">
   <div class="shell">
@@ -92,12 +93,15 @@
           <div id="unscheduledTasks" class="unscheduled-tasks"></div>
         </section>
       <% } else if (page === 'habits') { %>
-        <section class="page-heading"><div><p class="eyebrow">PEQUENOS PASSOS, GRANDES MUDANÇAS</p><h1>Meus hábitos <span class="heading-sparkle">✳</span></h1><p class="muted">Cultive constância sem transformar isso em cobrança.</p></div></section>
-        <section class="panel"><div class="panel-header"><div><h2>Seu acompanhamento</h2><span class="muted small">Marque os dias em que praticou cada hábito.</span></div></div><form id="habitForm" class="inline-form"><input id="habitName" name="name" maxlength="100" placeholder="Ex.: Ler 20 minutos, estudar Python..." aria-label="Nome do novo hábito" required /><button class="btn btn-primary" type="submit">+ Criar hábito</button></form><div id="habitList" class="habit-list"><p class="muted">Carregando hábitos...</p></div></section>
+        <section class="page-heading"><div><p class="eyebrow">PEQUENOS PASSOS, GRANDES MUDANÇAS</p><h1>Meus hábitos <span class="heading-sparkle">✳</span></h1><p class="muted">Faça espaço para aquilo que importa, no seu ritmo.</p></div><button class="btn btn-primary" type="button" id="newHabit">+ Novo hábito</button></section>
+        <section class="habit-overview" id="habitOverview" aria-label="Resumo dos hábitos"><p class="muted">Carregando seus hábitos...</p></section>
+        <section class="panel routines-panel"><div class="panel-header"><div><p class="eyebrow">SEUS RITUAIS</p><h2>Minhas rotinas</h2><p class="muted small">Agrupe hábitos para organizar suas manhãs, noites e momentos livres.</p></div><button class="btn btn-soft" id="newRoutine" type="button">+ Criar rotina</button></div><div id="routineList" class="routine-list"></div></section>
+        <section class="panel habits-panel"><div class="panel-header"><div><p class="eyebrow">CONSTÂNCIA, NÃO PERFEIÇÃO</p><h2>Acompanhamento semanal</h2><p class="muted small">Clique nos dias planejados para registrar suas realizações.</p></div></div><div id="habitList" class="habit-cards"><p class="muted">Carregando hábitos...</p></div></section>
       <% } else if (page === 'insights') { %>
         <section class="page-heading"><div><p class="eyebrow">CONHEÇA SEUS PRÓPRIOS PADRÕES</p><h1>Seus insights <span class="heading-sparkle">✳</span></h1><p class="muted">Os dados servem para entender sua rotina, não para julgar seus dias.</p></div></section>
         <div class="insights-grid"><section class="panel"><div class="panel-header"><div><p class="eyebrow">ÚLTIMOS 14 DIAS</p><h2>Tarefas concluídas por dia</h2></div></div><div id="insightsChart" class="chart-grid"><p class="muted">Carregando...</p></div></section><section class="panel insight-side"><p class="eyebrow">PATTERN INSIGHTS</p><div class="insight-icon">✦</div><h2>O que seus registros mostram</h2><div id="analysisContent" class="muted">Calculando...</div><p id="insightsStatus" class="small muted"></p></section></div>
-        <p class="privacy-note">↗ Informações calculadas apenas a partir das suas tarefas. No futuro, poderemos analisar hábitos e sessões de foco separadamente.</p>
+        <section class="panel habit-insights-panel"><div class="panel-header"><div><p class="eyebrow">PADRÕES DE CONSTÂNCIA</p><h2>Hábitos nas últimas 2 semanas</h2></div><span class="progress-sparkle" aria-hidden="true">✧</span></div><div id="habitInsights" class="habit-insight-content"><p class="muted">Carregando análise...</p></div></section>
+        <p class="privacy-note">↗ Os indicadores mostram registros e hábitos planejados; não medem seu valor ou produtividade total. A frequência histórica é estimada pela programação atual.</p>
       <% } %>
     </main>
   </div>
@@ -112,6 +116,34 @@
     <label>Observações (opcional)<textarea name="notes" rows="2" maxlength="2000" placeholder="Informações para lembrar depois..."></textarea></label>
     <p class="error-message" id="eventError" role="alert" hidden></p>
     <div class="modal-actions event-modal-actions"><button type="button" class="btn btn-danger-outline" id="deleteEvent" hidden>Excluir</button><span class="modal-action-spacer"></span><button type="button" class="btn btn-soft" data-close="eventDialog">Cancelar</button><button type="submit" class="btn btn-primary" id="saveEvent">Salvar compromisso</button></div>
+  </form></dialog>
+  <dialog id="habitDialog" class="modal habit-modal"><form id="habitEditForm" class="form-stack">
+    <input type="hidden" name="id" />
+    <div class="modal-title"><div><p class="eyebrow">NO SEU RITMO</p><h2 id="habitDialogTitle">Novo hábito</h2></div><button type="button" class="dialog-close" data-close="habitDialog" aria-label="Fechar">×</button></div>
+    <label>Nome do hábito<input name="name" required maxlength="100" placeholder="Ex.: Ler 20 minutos" /></label>
+    <fieldset class="habit-days-field"><legend>Dias em que deseja praticar</legend><div class="day-picker" id="habitDaysPicker">
+      <label><input type="checkbox" name="day" value="1" checked/><span>Seg</span></label>
+      <label><input type="checkbox" name="day" value="2" checked/><span>Ter</span></label>
+      <label><input type="checkbox" name="day" value="3" checked/><span>Qua</span></label>
+      <label><input type="checkbox" name="day" value="4" checked/><span>Qui</span></label>
+      <label><input type="checkbox" name="day" value="5" checked/><span>Sex</span></label>
+      <label><input type="checkbox" name="day" value="6" checked/><span>Sáb</span></label>
+      <label><input type="checkbox" name="day" value="0" checked/><span>Dom</span></label>
+    </div></fieldset>
+    <div class="modal-fields"><label>Meta semanal<input type="number" name="goalPerWeek" min="1" max="7" value="7" required /></label><label>Horário sugerido (opcional)<input type="time" name="preferredTime" /></label></div>
+    <label>Rotina (opcional)<select name="routineId"><option value="">Sem rotina</option></select></label>
+    <p class="muted small">A meta não pode ser maior que a quantidade de dias escolhidos.</p>
+    <p class="error-message" id="habitError" role="alert" hidden></p>
+    <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="habitDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar hábito</button></div>
+  </form></dialog>
+  <dialog id="routineDialog" class="modal"><form id="routineForm" class="form-stack">
+    <input type="hidden" name="id" />
+    <div class="modal-title"><div><p class="eyebrow">ORGANIZE SEUS MOMENTOS</p><h2 id="routineDialogTitle">Nova rotina</h2></div><button type="button" class="dialog-close" data-close="routineDialog" aria-label="Fechar">×</button></div>
+    <label>Nome da rotina<input name="name" required maxlength="100" placeholder="Ex.: Minha manhã tranquila" /></label>
+    <label>Quando acontece?<select name="period"><option value="morning">Manhã</option><option value="evening">Noite</option><option value="flexible">Qualquer horário</option></select></label>
+    <label>Descrição (opcional)<textarea name="description" rows="2" maxlength="240" placeholder="Qual a intenção desta rotina?"></textarea></label>
+    <p class="error-message" id="routineError" role="alert" hidden></p>
+    <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="routineDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar rotina</button></div>
   </form></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

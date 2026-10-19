@@ -1799,3 +1799,326 @@ textarea {
     opacity: 1;
   }
 }
+
+/* Pattern v0.4 — Hábitos, rotinas e análise de consistência */
+.habit-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 19px;
+}
+.habit-overview-card {
+  border: 1px solid var(--stroke);
+  border-radius: 18px;
+  background: #fff;
+  padding: 19px 22px;
+  box-shadow: var(--shadow);
+}
+.habit-overview-card strong {
+  display: block;
+  color: #7050af;
+  font-size: 31px;
+  line-height: 1.2;
+  margin: 4px 0;
+}
+.habit-overview-card strong small {
+  color: #9b8caf;
+  font-size: 18px;
+}
+.habit-overview-card p {
+  font-size: 12px;
+  color: #93899f;
+}
+.routines-panel {
+  margin-bottom: 19px;
+}
+.routines-panel .panel-header p.small,
+.habits-panel .panel-header p.small {
+  margin-top: 6px;
+}
+.routine-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.routine-list > .empty {
+  grid-column: 1 / -1;
+}
+.routine-card {
+  border: 1px solid #ebe5f4;
+  background: #fcfaff;
+  border-radius: 16px;
+  padding: 19px;
+  min-width: 0;
+}
+.routine-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.routine-card h3 {
+  font-size: 17px;
+  letter-spacing: -0.3px;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.routine-period {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  color: #8269b1;
+  background: #efe7fb;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.routine-items {
+  margin-top: 17px;
+  border-top: 1px solid #ebe3f5;
+  padding-top: 9px;
+}
+.routine-step {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 9px 0;
+  font-size: 12px;
+  color: #655a77;
+  min-width: 0;
+}
+.routine-step-mark {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 7px;
+  background: #efe8f7;
+  color: #8863bc;
+  flex-shrink: 0;
+}
+.routine-step-name {
+  flex: 1;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.routine-step-time {
+  font-size: 10px;
+  color: #9e92aa;
+  white-space: nowrap;
+}
+.habit-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.habit-cards > .empty {
+  grid-column: 1/-1;
+}
+.habit-card {
+  border: 1px solid #eee8f5;
+  border-radius: 17px;
+  padding: 19px;
+  min-width: 0;
+  background: #fff;
+}
+.habit-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.habit-card-title {
+  min-width: 0;
+}
+.habit-card .habit-name {
+  font-size: 14px;
+}
+.habit-card .habit-description {
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.habit-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 14px 0;
+}
+.habit-metric {
+  padding: 6px 9px;
+  font-size: 10px;
+  background: #f7f3fc;
+  color: #7a6897;
+  border-radius: 8px;
+  font-weight: 650;
+}
+.habit-metric.goal-done {
+  background: #eaf5ed;
+  color: #46805a;
+}
+.habit-card .habit-week {
+  justify-content: space-between;
+  gap: 4px;
+}
+.habit-card .habit-day {
+  flex: 1;
+  min-width: 0;
+}
+.habit-card .habit-day button {
+  width: 29px;
+  height: 29px;
+  border-radius: 9px;
+}
+.habit-card .habit-day.is-off button {
+  background: #faf9fc;
+  color: #c9c4ce;
+  border-color: #f2f0f4;
+  cursor: default;
+}
+.habit-card .habit-day button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+.habit-days-field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.habit-days-field legend {
+  font-size: 12px;
+  color: #6b6278;
+  font-weight: 650;
+  margin-bottom: 11px;
+}
+.day-picker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+.day-picker label {
+  position: relative;
+  cursor: pointer;
+  min-width: 0;
+}
+.day-picker input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.day-picker span {
+  display: grid;
+  place-items: center;
+  border: 1px solid #e9e3f0;
+  background: #faf8fd;
+  color: #968aa5;
+  border-radius: 10px;
+  padding: 10px 0;
+  font-size: 11px;
+  font-weight: 750;
+}
+.day-picker input:checked + span {
+  background: #896bca;
+  color: #fff;
+  border-color: #896bca;
+}
+.day-picker input:focus-visible + span {
+  outline: 3px solid #b5a0e3;
+  outline-offset: 2px;
+}
+.habit-insights-panel {
+  margin-top: 19px;
+}
+.habit-insight-number {
+  font-size: 37px;
+  font-weight: 800;
+  color: #7954b8;
+  letter-spacing: -1px;
+}
+.habit-insight-content .progress-track {
+  margin: 14px 0 20px;
+}
+.habit-insight-text {
+  font-size: 14px;
+  color: #5f536f;
+  margin-bottom: 12px;
+  line-height: 1.65;
+}
+@media (max-width: 1130px) {
+  .habit-cards,
+  .routine-list {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .habit-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .habit-overview-card {
+    padding: 15px;
+  }
+  .habit-overview-card:last-child {
+    grid-column: span 2;
+  }
+  .routines-panel .panel-header {
+    flex-wrap: wrap;
+  }
+  .habit-card {
+    padding: 13px;
+  }
+  .habit-card .habit-week {
+    gap: 2px;
+  }
+  .habit-card .habit-day button {
+    width: 30px;
+    height: 30px;
+  }
+  .day-picker {
+    gap: 3px;
+  }
+  .day-picker span {
+    font-size: 10px;
+    padding: 9px 0;
+  }
+}
+.habit-history {
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid #f2eef7;
+}
+.habit-history-label {
+  font-size: 10px;
+  font-weight: 750;
+  color: #80728e;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 9px;
+}
+.habit-history-label span {
+  color: #aaa0b3;
+  font-weight: 500;
+}
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 5px;
+}
+.history-day {
+  height: 13px;
+  border-radius: 4px;
+  background: #faf9fc;
+  border: 1px solid #f1edf4;
+}
+.history-day.done {
+  background: #997cce;
+  border-color: #997cce;
+}
+.history-day.missed {
+  background: #f0eaf8;
+  border-color: #e8ddf5;
+}

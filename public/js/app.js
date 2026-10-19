@@ -4,6 +4,7 @@ const page = document.body.dataset.page;
 const state = {
   tasks: [],
   habits: [],
+  routines: [],
   entries: [],
   events: [],
   filter: "all",
@@ -12,6 +13,7 @@ const state = {
   calendarRequest: 0,
 };
 const $ = (selector) => document.querySelector(selector);
+const HabitRules = window.PatternHabits;
 const escapeHTML = (value = "") =>
   String(value).replace(
     /[&<>"']/g,
@@ -90,7 +92,10 @@ function renderDashboard() {
     (task) => task.dueDate && task.dueDate < today,
   );
   const dueToday = pending.filter((task) => task.dueDate === today);
-  const habitsCompleted = state.habits.filter((habit) =>
+  const scheduledHabits = state.habits.filter((habit) =>
+    HabitRules.isScheduled(habit, today),
+  );
+  const habitsCompleted = scheduledHabits.filter((habit) =>
     state.entries.some(
       (entry) => entry.habitId === habit.id && entry.date === today,
     ),
@@ -112,7 +117,7 @@ function renderDashboard() {
     },
     {
       label: "Hábitos realizados",
-      number: `${habitsCompleted}/${state.habits.length}`,
+      number: `${habitsCompleted}/${scheduledHabits.length}`,
       caption: "Pequenos passos contam",
       icon: "✦",
     },
@@ -137,9 +142,9 @@ function renderDashboard() {
     return `<div class="progress-group"><div class="progress-head"><span>${label}</span><strong>${total ? `${done} de ${total}` : emptyLabel}</strong></div><div class="progress-track" role="progressbar" aria-label="${label}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div></div>`;
   }
   $("#homeProgress").innerHTML = `
-    <div class="progress-summary"><strong>${tasksForToday.length + state.habits.length ? "Seu dia está ganhando forma ✦" : "Comece no seu ritmo ✦"}</strong><span>Seu progresso é calculado apenas com tarefas com prazo para hoje e hábitos cadastrados.</span></div>
+    <div class="progress-summary"><strong>${tasksForToday.length + scheduledHabits.length ? "Seu dia está ganhando forma ✦" : "Comece no seu ritmo ✦"}</strong><span>Seu progresso é calculado apenas com tarefas com prazo para hoje e hábitos cadastrados.</span></div>
     ${progress("Tarefas de hoje", todayCompleted, tasksForToday.length, "Nenhuma agendada")}
-    ${progress("Hábitos de hoje", habitsCompleted, state.habits.length, "Nenhum cadastrado")}`;
+    ${progress("Hábitos de hoje", habitsCompleted, scheduledHabits.length, "Nenhum planejado")}`;
 
   const priorityRank = { high: 0, medium: 1, low: 2 };
   // Ordena primeiro tarefas vencidas, depois as de hoje, as futuras e por último as sem prazo.
@@ -158,8 +163,8 @@ function renderDashboard() {
         .map((task) => taskRow(task, { compact: true }))
         .join("")
     : empty("Tudo em dia por aqui ✦", "Adicione uma tarefa para começar.");
-  $("#homeHabits").innerHTML = state.habits.length
-    ? state.habits
+  $("#homeHabits").innerHTML = scheduledHabits.length
+    ? scheduledHabits
         .slice(0, 6)
         .map((habit) => {
           const checked = state.entries.some(
@@ -168,7 +173,10 @@ function renderDashboard() {
           return `<div class="item-row"><input class="check" type="checkbox" data-habit-check="${habit.id}" data-date="${today}" aria-label="${checked ? "Desmarcar" : "Marcar"} ${escapeHTML(habit.name)}" ${checked ? "checked" : ""}><div class="item-info"><div class="item-title ${checked ? "done" : ""}">${escapeHTML(habit.name)}</div><div class="item-meta">${checked ? "Feito hoje. Boa!" : "Ainda dá tempo ✧"}</div></div></div>`;
         })
         .join("")
-    : empty("Sua rotina, suas regras", "Crie seu primeiro hábito.");
+    : empty(
+        "Hoje sem hábitos agendados",
+        "Organize sua semana na página Hábitos.",
+      );
 
   const upcoming = state.events
     .filter((event) => {
@@ -247,41 +255,138 @@ function renderTasks() {
       tab.classList.toggle("active", tab.dataset.filter === state.filter),
     );
 }
-function renderHabits() {
-  const container = $("#habitList");
-  if (!state.habits.length) {
-    container.innerHTML = empty(
-      "Comece com algo pequeno",
-      "Crie um hábito que faça sentido para você.",
-    );
-    return;
-  }
-  const dates = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setHours(12, 0, 0, 0);
-    d.setDate(d.getDate() - 6 + i);
-    return localISO(d);
-  });
-  container.innerHTML = state.habits
-    .map((h) => {
-      const checkedDates = new Set(
-        state.entries.filter((e) => e.habitId === h.id).map((e) => e.date),
-      );
-      const completed = dates.filter((d) => checkedDates.has(d)).length;
-      const controls = dates
-        .map((date) => {
-          const checked = checkedDates.has(date);
-          const short = fromISO(date)
-            .toLocaleDateString("pt-BR", { weekday: "short" })
-            .replace(".", "")
-            .slice(0, 3);
-          return `<div class="habit-day"><span>${escapeHTML(short)}</span><button class="${checked ? "checked" : ""}" type="button" data-habit-check="${h.id}" data-date="${date}" aria-pressed="${checked}" aria-label="${checked ? "Desmarcar" : "Marcar"} ${escapeHTML(h.name)} em ${date}">${checked ? "✓" : "·"}</button></div>`;
-        })
-        .join("");
-      return `<article class="habit-row"><div><div class="habit-name">${escapeHTML(h.name)}</div><div class="habit-description">${completed} de 7 dias nesta semana</div></div><div class="habit-week">${controls}</div><button class="mini-button" data-habit-delete="${h.id}" aria-label="Excluir hábito">×</button></article>`;
+const routinePeriods = {
+  morning: "Manhã",
+  evening: "Noite",
+  flexible: "Flexível",
+};
+function markedForHabit(habitId) {
+  return new Set(
+    state.entries.filter((e) => e.habitId === habitId).map((e) => e.date),
+  );
+}
+function habitCard(h) {
+  const today = todayISO();
+  const checkedDates = markedForHabit(h.id);
+  const dates = HabitRules.weekDates(today);
+  const weekly = HabitRules.weekSummary(h, checkedDates, today);
+  const chain = HabitRules.streak(h, checkedDates, today);
+  const schedule = h.scheduleDays || [0, 1, 2, 3, 4, 5, 6];
+  const controls = dates
+    .map((date) => {
+      const planned = HabitRules.isScheduled(h, date);
+      const checked = checkedDates.has(date);
+      const future = date > today;
+      const disabled = !planned || future;
+      const label = HabitRules.labels[HabitRules.weekday(date)];
+      return `<div class="habit-day ${disabled ? "is-off" : ""}"><span>${label}</span><button type="button" class="${checked ? "checked" : ""}" data-habit-check="${h.id}" data-date="${date}" ${disabled ? "disabled" : ""} aria-pressed="${checked}" aria-label="${checked ? "Desmarcar" : "Marcar"} ${escapeHTML(h.name)} em ${date}${!planned ? " (não planejado)" : ""}">${checked ? "✓" : planned ? "·" : "−"}</button></div>`;
     })
     .join("");
+  const goalDone = weekly.checked >= weekly.goal;
+  const history = Array.from({ length: 28 }, (_, i) =>
+    HabitRules.shifted(today, i - 27),
+  )
+    .map((date) => {
+      const planned = HabitRules.isScheduled(h, date),
+        checked = checkedDates.has(date);
+      const className = checked ? "done" : planned ? "missed" : "rest";
+      return `<span class="history-day ${className}" title="${date}: ${checked ? "Realizado" : planned ? "Não registrado" : "Descanso"}" aria-label="${date}: ${checked ? "Realizado" : planned ? "Não registrado" : "Não programado"}"></span>`;
+    })
+    .join("");
+  return `<article class="habit-card">
+    <div class="habit-card-header"><div class="habit-card-title"><div class="habit-name">${escapeHTML(h.name)}</div><p class="habit-description">${h.preferredTime ? `${escapeHTML(h.preferredTime)} · ` : ""}${schedule.length === 7 ? "Todos os dias" : schedule.map((d) => HabitRules.labels[d]).join(", ")}</p></div>
+    <div class="row-actions"><button class="mini-button" type="button" data-habit-edit="${h.id}" aria-label="Editar hábito ${escapeHTML(h.name)}">✎</button><button class="mini-button" type="button" data-habit-delete="${h.id}" aria-label="Excluir hábito ${escapeHTML(h.name)}">×</button></div></div>
+    <div class="habit-metrics"><span class="habit-metric ${goalDone ? "goal-done" : ""}">✧ Meta semanal: ${weekly.checked}/${weekly.goal}</span><span class="habit-metric">↗ Sequência: ${chain} ${chain === 1 ? "realização" : "realizações"}</span></div>
+    <div class="habit-week" role="group" aria-label="Dias da semana para ${escapeHTML(h.name)}">${controls}</div>
+    <div class="habit-history"><div class="habit-history-label">Últimos 28 dias <span>■ realizado · □ planejado</span></div><div class="history-grid" aria-label="Histórico de 28 dias de ${escapeHTML(h.name)}">${history}</div></div>
+  </article>`;
 }
+function renderHabits() {
+  const today = todayISO();
+  const scheduled = state.habits.filter((h) =>
+    HabitRules.isScheduled(h, today),
+  );
+  const completed = scheduled.filter((h) => markedForHabit(h.id).has(today));
+  const tracked = state.habits.map((h) =>
+    HabitRules.weekSummary(h, markedForHabit(h.id), today),
+  );
+  const thisWeekDone = tracked.reduce((sum, x) => sum + x.checked, 0);
+  const thisWeekPlanned = tracked.reduce((sum, x) => sum + x.planned, 0);
+  $("#habitOverview").innerHTML =
+    `<article class="habit-overview-card"><span class="eyebrow">HOJE</span><strong>${completed.length}<small> / ${scheduled.length}</small></strong><p>Hábitos realizados</p></article><article class="habit-overview-card"><span class="eyebrow">NESTA SEMANA</span><strong>${thisWeekPlanned ? Math.round((thisWeekDone / thisWeekPlanned) * 100) : 0}%</strong><p>Ocorrências concluídas até hoje</p></article><article class="habit-overview-card"><span class="eyebrow">SEU ESPAÇO</span><strong>${state.routines.length}</strong><p>Rotinas organizadas</p></article>`;
+
+  const grouped = state.routines
+    .map((r) => {
+      const related = state.habits.filter((h) => h.routineId === r.id);
+      return `<article class="routine-card"><div class="routine-card-top"><div><span class="routine-period">${escapeHTML(routinePeriods[r.period] || "Flexível")}</span><h3>${escapeHTML(r.name)}</h3>${r.description ? `<p class="muted small">${escapeHTML(r.description)}</p>` : ""}</div><div class="row-actions"><button type="button" class="mini-button" data-routine-edit="${r.id}" aria-label="Editar rotina">✎</button><button type="button" class="mini-button" data-routine-delete="${r.id}" aria-label="Excluir rotina">×</button></div></div>
+    <div class="routine-items">${
+      related.length
+        ? related
+            .map((h) => {
+              const planned = HabitRules.isScheduled(h, today),
+                done = markedForHabit(h.id).has(today);
+              return `<div class="routine-step"><span class="routine-step-mark">${planned ? (done ? "✓" : "○") : "·"}</span><span class="routine-step-name">${escapeHTML(h.name)}</span><span class="routine-step-time">${h.preferredTime ? escapeHTML(h.preferredTime) : planned ? "Hoje" : "Outro dia"}</span></div>`;
+            })
+            .join("")
+        : '<p class="muted small">Adicione um hábito a esta rotina usando o botão Novo hábito.</p>'
+    }</div></article>`;
+    })
+    .join("");
+  $("#routineList").innerHTML =
+    grouped ||
+    empty(
+      "Comece por uma rotina",
+      "Crie uma rotina matinal, noturna ou flexível para agrupar hábitos.",
+    );
+  $("#habitList").innerHTML = state.habits.length
+    ? state.habits.map(habitCard).join("")
+    : empty(
+        "Seu primeiro passo",
+        "Crie um hábito e escolha os dias em que deseja praticá-lo.",
+      );
+}
+function populateRoutineSelect(selected = "") {
+  const select = $("#habitEditForm").elements.routineId;
+  select.innerHTML =
+    '<option value="">Sem rotina</option>' +
+    state.routines
+      .map((r) => `<option value="${r.id}">${escapeHTML(r.name)}</option>`)
+      .join("");
+  select.value = selected || "";
+}
+function openHabit(habit = null) {
+  const f = $("#habitEditForm");
+  f.reset();
+  f.elements.id.value = habit?.id || "";
+  f.elements.name.value = habit?.name || "";
+  f.elements.preferredTime.value = habit?.preferredTime || "";
+  const days = habit?.scheduleDays || [0, 1, 2, 3, 4, 5, 6];
+  f.querySelectorAll('input[name="day"]').forEach((input) => {
+    input.checked = days.includes(Number(input.value));
+  });
+  f.elements.goalPerWeek.value = habit?.goalPerWeek || 7;
+  f.elements.goalPerWeek.max = days.length;
+  populateRoutineSelect(habit?.routineId);
+  $("#habitDialogTitle").textContent = habit ? "Editar hábito" : "Novo hábito";
+  $("#habitError").hidden = true;
+  $("#habitDialog").showModal();
+  f.elements.name.focus();
+}
+function openRoutine(routine = null) {
+  const f = $("#routineForm");
+  f.reset();
+  f.elements.id.value = routine?.id || "";
+  f.elements.name.value = routine?.name || "";
+  f.elements.period.value = routine?.period || "morning";
+  f.elements.description.value = routine?.description || "";
+  $("#routineDialogTitle").textContent = routine
+    ? "Editar rotina"
+    : "Nova rotina";
+  $("#routineError").hidden = true;
+  $("#routineDialog").showModal();
+  f.elements.name.focus();
+}
+
 const eventCategories = {
   study: "Estudos",
   work: "Trabalho",
@@ -456,6 +561,19 @@ function renderInsights(data) {
     $("#insightsStatus").textContent =
       "Modo básico: o serviço Python não está conectado.";
   }
+  const habitPanel = $("#habitInsights");
+  if (habitPanel) {
+    const a = data.habitAnalysis;
+    if (data.habitPythonOnline && a) {
+      const percent = a.completionRate === null ? "—" : `${a.completionRate}%`;
+      habitPanel.innerHTML = `<div class="habit-insight-number">${percent}</div><p class="muted">${a.completed} de ${a.planned} realizações planejadas</p><div class="progress-track"><span style="width:${a.completionRate || 0}%"></span></div><p class="habit-insight-text">${escapeHTML(a.insight)}</p><p class="muted small">${escapeHTML(a.method)}</p>`;
+    } else {
+      habitPanel.innerHTML = empty(
+        "Análise indisponível",
+        "Inicie o serviço Python para visualizar a consistência dos hábitos.",
+      );
+    }
+  }
 }
 async function refreshTasks() {
   state.tasks = await api("/api/tasks");
@@ -464,8 +582,12 @@ async function refreshTasks() {
   if (page === "calendar") renderCalendar();
 }
 async function refreshHabits() {
-  const data = await api("/api/habits");
+  const [data, routines] = await Promise.all([
+    api("/api/habits"),
+    page === "habits" ? api("/api/routines") : Promise.resolve(null),
+  ]);
   state.habits = data.habits;
+  if (routines) state.routines = routines;
   state.entries = data.entries;
   if (page === "habits") renderHabits();
   if (page === "app") renderDashboard();
@@ -591,6 +713,38 @@ document.addEventListener("click", async (e) => {
       }
       return;
     }
+    if (target.matches("#newHabit")) {
+      openHabit();
+      return;
+    }
+    if (target.matches("#newRoutine")) {
+      openRoutine();
+      return;
+    }
+    if (target.dataset.habitEdit) {
+      const h = state.habits.find((h) => h.id === target.dataset.habitEdit);
+      if (h) openHabit(h);
+      return;
+    }
+    if (target.dataset.routineEdit) {
+      const r = state.routines.find((r) => r.id === target.dataset.routineEdit);
+      if (r) openRoutine(r);
+      return;
+    }
+    if (target.dataset.routineDelete) {
+      if (
+        window.confirm(
+          "Excluir esta rotina? Os hábitos associados serão mantidos, sem rotina.",
+        )
+      ) {
+        await api(`/api/routines/${target.dataset.routineDelete}`, {
+          method: "DELETE",
+        });
+        await refreshHabits();
+        toast("Rotina excluída; hábitos preservados.");
+      }
+      return;
+    }
     if (target.dataset.habitDelete) {
       if (window.confirm("Excluir este hábito e seu histórico?")) {
         await api(`/api/habits/${target.dataset.habitDelete}`, {
@@ -627,6 +781,14 @@ document.addEventListener("click", async (e) => {
     showError(err);
   }
 });
+$("#habitDaysPicker")?.addEventListener("change", () => {
+  const f = $("#habitEditForm");
+  const count = f.querySelectorAll('input[name="day"]:checked').length;
+  f.elements.goalPerWeek.max = Math.max(1, count);
+  if (Number(f.elements.goalPerWeek.value) > count)
+    f.elements.goalPerWeek.value = Math.max(1, count);
+});
+
 document.addEventListener("change", async (e) => {
   const target = e.target;
   if (target.matches("[data-task-toggle]")) {
@@ -758,17 +920,62 @@ document.addEventListener("drop", async (e) => {
     showError(error);
   }
 });
-$("#habitForm")?.addEventListener("submit", async (e) => {
+$("#habitEditForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const name = $("#habitName").value.trim();
-  if (!name) return;
+  const f = e.currentTarget;
+  const id = f.elements.id.value;
+  const days = [...f.querySelectorAll('input[name="day"]:checked')]
+    .map((el) => Number(el.value))
+    .sort((a, b) => a - b);
+  const error = $("#habitError");
+  error.hidden = true;
+  if (!days.length) {
+    error.textContent = "Escolha pelo menos um dia da semana.";
+    error.hidden = false;
+    return;
+  }
+  const body = {
+    name: f.elements.name.value.trim(),
+    scheduleDays: days,
+    preferredTime: f.elements.preferredTime.value || null,
+    goalPerWeek: Number(f.elements.goalPerWeek.value),
+    routineId: f.elements.routineId.value || null,
+  };
   try {
-    await api("/api/habits", { method: "POST", body: { name } });
-    $("#habitName").value = "";
+    await api(id ? `/api/habits/${id}` : "/api/habits", {
+      method: id ? "PUT" : "POST",
+      body,
+    });
+    $("#habitDialog").close();
     await refreshHabits();
-    toast("Novo hábito criado!");
+    toast(id ? "Hábito atualizado." : "Novo hábito criado!");
   } catch (err) {
-    showError(err);
+    error.textContent = err.message;
+    error.hidden = false;
+  }
+});
+$("#routineForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.currentTarget;
+  const id = f.elements.id.value;
+  const error = $("#routineError");
+  error.hidden = true;
+  const body = {
+    name: f.elements.name.value.trim(),
+    period: f.elements.period.value,
+    description: f.elements.description.value.trim(),
+  };
+  try {
+    await api(id ? `/api/routines/${id}` : "/api/routines", {
+      method: id ? "PUT" : "POST",
+      body,
+    });
+    $("#routineDialog").close();
+    await refreshHabits();
+    toast(id ? "Rotina atualizada." : "Rotina criada!");
+  } catch (err) {
+    error.textContent = err.message;
+    error.hidden = false;
   }
 });
 
