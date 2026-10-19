@@ -148,7 +148,6 @@ function renderDashboard() {
     ${progress("Hábitos de hoje", habitsCompleted, scheduledHabits.length, "Nenhum planejado")}`;
 
   const priorityRank = { high: 0, medium: 1, low: 2 };
-  // Ordena primeiro tarefas vencidas, depois as de hoje, as futuras e por último as sem prazo.
   const ordered = [...pending].sort((a, b) => {
     const dateA = a.dueDate || "9999-12-31";
     const dateB = b.dueDate || "9999-12-31";
@@ -206,12 +205,9 @@ function renderDashboard() {
                     month: "short",
                   })
                   .replace(".", "");
-          const timeLabel = ongoing
-            ? "Em andamento"
-            : starts.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
+          const timeLabel = event.timeMode && event.timeMode!=='exact'
+            ? eventTimeLabel(event)
+            : ongoing ? "Em andamento" : eventTimeLabel(event);
           return `<article class="agenda-item"><div class="agenda-date"><strong>${escapeHTML(dayLabel)}</strong><span>${escapeHTML(timeLabel)}</span></div><div class="agenda-info"><strong>${escapeHTML(event.title)}</strong>${event.notes ? `<span>${escapeHTML(event.notes)}</span>` : ""}</div></article>`;
         })
         .join("")
@@ -474,12 +470,7 @@ function renderCalendar() {
         .map((event) => {
           const categoryColor=displayColor(event.categoryColor);
           const startingHere = localISO(new Date(event.startsAt)) === date;
-          const time = startingHere
-            ? new Date(event.startsAt).toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "Continua";
+          const time = startingHere ? eventTimeLabel(event) : "Continua";
           return `<button class="cal-entry cal-appointment" style="--event-accent:${categoryColor}" type="button" data-event-edit="${event.id}" title="Editar compromisso: ${escapeHTML(event.title)}">
         <span class="cal-entry-time">${escapeHTML(time)}</span><span class="cal-entry-title">${escapeHTML(event.title)}</span>${event.isRecurring ? `<span class="cal-entry-time">↻</span>` : ""}</button>`;
         })
@@ -621,6 +612,32 @@ function openTask(task = null, { forToday = false } = {}) {
   dialog.showModal();
   form.elements.title.focus();
 }
+function formElementsStartDate(){return $('#eventForm').elements.startsAt.value.slice(0,10);}
+function eventTimeLabel(event) {
+  const labels={all_day:'Dia inteiro',morning:'Manhã',afternoon:'Tarde',night:'Noite'};
+  return labels[event.timeMode] || new Date(event.startsAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+function setEventTimeVisibility(){
+  const form=$('#eventForm');
+  const exact=form.elements.timeMode.value==='exact';
+  $('#eventExactFields').hidden=!exact;
+  $('#eventDateField').hidden=exact;
+  form.elements.startsAt.required=exact;
+  form.elements.endsAt.required=exact;
+  form.elements.eventDate.required=!exact;
+  const note={all_day:'O compromisso ocupa o dia inteiro, sem horário de término.',morning:'Das 06:00 às 12:00.',afternoon:'Das 12:00 às 18:00.',night:'Das 18:00 até a meia-noite.'};
+  $('#eventTimeHelp').hidden=exact;
+  $('#eventTimeHelp').textContent=note[form.elements.timeMode.value]||'';
+}
+function eventDateRange(iso, mode){
+  const [hour,endHour,nextDay]={all_day:[0,0,true],morning:[6,12,false],afternoon:[12,18,false],night:[18,0,true]}[mode];
+  const start=new Date(`${iso}T00:00:00`);
+  const end=new Date(`${iso}T00:00:00`);
+  start.setHours(hour,0,0,0);
+  if(nextDay)end.setDate(end.getDate()+1);
+  end.setHours(endHour,0,0,0);
+  return {start,end};
+}
 function localDateTimeInput(date) {
   const d = new Date(date);
   return `${localISO(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -646,6 +663,9 @@ function openEvent(event = null, forDate = null) {
   form.elements.title.value = event?.title || "";
   form.elements.startsAt.value = localDateTimeInput(starts);
   form.elements.endsAt.value = localDateTimeInput(ends);
+  form.elements.eventDate.value = localISO(starts);
+  form.elements.timeMode.value = event?.timeMode || 'exact';
+  setEventTimeVisibility();
   fillCategorySelect(event?.categoryId);setRepeatFields(form,'event',event);
   form.elements.notes.value = event?.notes || "";
   $("#eventDialogTitle").textContent = event
@@ -657,7 +677,6 @@ function openEvent(event = null, forDate = null) {
   form.elements.title.focus();
 }
 
-// Eventos delegados permitem atualizar as listas após cada alteração.
 document.addEventListener("click", async (e) => {
   const target = e.target.closest("button, a");
   if (!target) return;
@@ -800,8 +819,20 @@ document.addEventListener("change", async (e) => {
   const target = e.target;
   if(target.matches('.repeat-select')){
     const form=target.form;
-    setRepeatVisibility(form,form.id==='taskForm'?'task':'event');return;
+    const kind=form.matches('#taskForm')?'task':'event';
+    if(form.elements.repeat.value==='weekly' && !form.dataset.repeatDaysTouched){
+      const iso=kind==='task'?(form.elements.dueDate.value||todayISO()):(form.elements.timeMode.value==='exact'?form.elements.startsAt.value.slice(0,10):form.elements.eventDate.value);
+      const day=fromISO(iso||todayISO()).getDay();
+      form.querySelectorAll(`[data-repeat-days="${kind}"] input`).forEach(input=>input.checked=Number(input.value)===day);
+    }
+    if(kind==='task' && form.elements.repeat.value!=='none' && !form.elements.dueDate.value)form.elements.dueDate.value=todayISO();
+    setRepeatVisibility(form,kind);return;
   }
+  if(target.matches('#eventTimeMode')){
+    if(target.value!=='exact'&&$('#eventDateField').hidden&&formElementsStartDate())$('#eventForm').elements.eventDate.value=formElementsStartDate();
+    setEventTimeVisibility();return;
+  }
+  if(target.matches('input[name="repeatDay"]')){target.form.dataset.repeatDaysTouched='1';return;}
   if (target.matches("[data-task-toggle]")) {
     try {
       const t=state.tasks.find(t=>t.id===target.dataset.taskToggle);
@@ -858,14 +889,14 @@ $("#eventForm").addEventListener("submit", async (e) => {
   const id = form.elements.id.value;
   const error = $("#eventError");
   error.hidden = true;
-  const startDate = new Date(form.elements.startsAt.value);
-  const endDate = new Date(form.elements.endsAt.value);
-  if (
-    Number.isNaN(startDate.getTime()) ||
-    Number.isNaN(endDate.getTime()) ||
-    startDate >= endDate
-  ) {
-    error.textContent = "O término precisa ser depois do início.";
+  const mode=form.elements.timeMode.value;
+  const range=mode==='exact'
+    ? {start:new Date(form.elements.startsAt.value),end:new Date(form.elements.endsAt.value)}
+    : form.elements.eventDate.value ? eventDateRange(form.elements.eventDate.value,mode) : {start:new Date(NaN),end:new Date(NaN)};
+  const startDate=range.start;
+  const endDate=range.end;
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || startDate >= endDate) {
+    error.textContent = "Confira a data e os horários do compromisso.";
     error.hidden = false;
     return;
   }
@@ -873,6 +904,7 @@ $("#eventForm").addEventListener("submit", async (e) => {
     title: form.elements.title.value,
     startsAt: startDate.toISOString(),
     endsAt: endDate.toISOString(),
+    timeMode:mode,
     categoryId:form.elements.categoryId.value,
     notes: form.elements.notes.value,
     ...getRepeatBody(form,'event'),
@@ -1020,7 +1052,6 @@ async function init() {
   }
 }
 
-// Forms for repeated tasks/events. A weekly series uses JavaScript day indices 0..6.
 function setRepeatVisibility(form,kind){
  const repeating=form.elements.repeat.value!=='none';
  const weekly=form.elements.repeat.value==='weekly';
@@ -1032,7 +1063,9 @@ function setRepeatFields(form,kind,obj){
  form.elements.repeat.value=obj?.repeat||'none';
  form.elements.repeatUntil.value=obj?.repeatUntil||'';
  const box=form.querySelector(`[data-repeat-days="${kind}"] .repeat-days`);
- const days=obj?.repeatDays?.length?obj.repeatDays:[1,2,3,4,5];
+ const iso=kind==='task'?(form.elements.dueDate.value||todayISO()):(form.elements.timeMode.value==='exact'?form.elements.startsAt.value.slice(0,10):form.elements.eventDate.value);
+ const days=obj?.repeatDays?.length?obj.repeatDays:[fromISO(iso||todayISO()).getDay()];
+ form.dataset.repeatDaysTouched=obj?.repeatDays?.length?'1':'';
  box.innerHTML=[1,2,3,4,5,6,0].map((day,i)=>`<label><input name="repeatDay" type="checkbox" value="${day}" ${days.includes(day)?'checked':''} /><span>${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][i]}</span></label>`).join('');
  setRepeatVisibility(form,kind);
 }

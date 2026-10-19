@@ -12,6 +12,7 @@ const { z } = require("zod");
 const { rateLimit } = require("express-rate-limit");
 const { Pool } = require("pg");
 const { addDays,localDate,occurrences,occurrenceTimestamp } = require("./recurrence-utils");
+const { validEventWindow } = require("./event-time-utils");
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   throw new Error(
@@ -68,7 +69,6 @@ app.use(
   express.static(path.join(__dirname, "public"), { maxAge: "2h" }),
 );
 
-// Restrição adicional para alterações autenticadas por cookie.
 app.use("/api", (req, res, next) => {
   if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
     if (req.method !== "DELETE" && !req.is("application/json"))
@@ -180,7 +180,6 @@ app.post(
         "INSERT INTO users(id,name,email,password_hash) VALUES($1,$2,$3,$4)",
         [user.id, user.name, user.email, hash],
       );
-      // Usuários cadastrados depois da migração também recebem blocos iniciais.
       await db.query(`INSERT INTO event_categories(id,user_id,name,color,legacy_key)
         SELECT gen_random_uuid(),$1,v.name,v.color,v.key
         FROM (VALUES ('study','Estudos','#8e77d2'),('work','Trabalho','#73a1cf'),
@@ -278,7 +277,6 @@ app.get('/api/tasks',asyncRoute(async(req,res)=>{
     if(generated.length>=1200) break;
   }
   if(listMode){
-    // A lista mostra só a próxima ocorrência de cada tarefa recorrente.
     const nearest=new Map();
     for(const item of generated){
       const current=nearest.get(item.seriesId);
@@ -290,7 +288,6 @@ app.get('/api/tasks',asyncRoute(async(req,res)=>{
   return res.json([...simple,...generated]);
 }));
 
-// Marca cada realização independente das próximas datas da série.
 app.patch('/api/recurring-tasks/:id/:date/toggle',uuidRoute,asyncRoute(async(req,res)=>{
   const date=dateString.safeParse(req.params.date);
   if(!date.success) return res.status(400).json({error:'Data inválida.'});
@@ -349,7 +346,6 @@ app.put(
     res.json(rows[0]);
   }),
 );
-// Alteração de data isolada: ideal para arrastar tarefas sem sobrescrever outros campos.
 app.patch(
   "/api/tasks/:id/date",
   uuidRoute,
@@ -557,7 +553,6 @@ app.post(
   asyncRoute(async (req, res) => {
     const body = validate(z.object({ date: dateString }).strict(), req, res);
     if (!body) return;
-    // Comparação de datas sem depender do horário do servidor.
     const today = new Date(
       new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }),
     );
@@ -605,7 +600,6 @@ app.delete(
   }),
 );
 
-// As categorias são do usuário, inclusive as cores e os nomes dos blocos.
 const categoryName = safeText(40);
 const categoryColor = z.string().regex(/^#[0-9a-fA-F]{6}$/,'Cor inválida.');
 const categorySchema = z.object({name:categoryName,color:categoryColor}).strict();
@@ -630,7 +624,6 @@ app.put('/api/event-categories/:id',uuidRoute,asyncRoute(async(req,res)=>{
   }catch(e){if(e.code==='23505')return res.status(409).json({error:'Você já tem um bloco com esse nome.'});throw e;}
 }));
 app.delete('/api/event-categories/:id',uuidRoute,asyncRoute(async(req,res)=>{
-  // Nunca desvincular silenciosamente compromissos existentes.
   const used=(await db.query('SELECT 1 FROM events WHERE user_id=$1 AND category_id=$2 LIMIT 1',[req.user.id,req.params.id])).rowCount;
   if(used)return res.status(409).json({error:'Este bloco possui compromissos. Mova-os para outro bloco antes de excluir.'});
   const result=await db.query('DELETE FROM event_categories WHERE id=$1 AND user_id=$2',[req.params.id,req.user.id]);
@@ -638,12 +631,13 @@ app.delete('/api/event-categories/:id',uuidRoute,asyncRoute(async(req,res)=>{
   res.json({ok:true});
 }));
 
-const eventFields = `e.id,e.title,e.starts_at AS "startsAt",e.ends_at AS "endsAt",e.notes,e.category_id AS "categoryId",c.name AS "categoryName",c.color AS "categoryColor",e.recurrence_type AS "repeat",e.recurrence_days AS "repeatDays",to_char(e.recurrence_until,'YYYY-MM-DD') AS "repeatUntil"`;
+const eventFields = `e.id,e.title,e.starts_at AS "startsAt",e.ends_at AS "endsAt",e.notes,e.category_id AS "categoryId",c.name AS "categoryName",c.color AS "categoryColor",e.time_mode AS "timeMode",e.recurrence_type AS "repeat",e.recurrence_days AS "repeatDays",to_char(e.recurrence_until,'YYYY-MM-DD') AS "repeatUntil"`;
 const eventQueryBase=`SELECT ${eventFields} FROM events e LEFT JOIN event_categories c ON c.id=e.category_id`;
 const eventSchema=z.object({
   title:safeText(160),startsAt:z.string().datetime({offset:true}),endsAt:z.string().datetime({offset:true}),
-  notes:z.string().max(2000).default(''),categoryId:z.string().uuid(),...recurrenceFields
+  notes:z.string().max(2000).default(''),categoryId:z.string().uuid(),timeMode:z.enum(['exact','all_day','morning','afternoon','night']).default('exact'),...recurrenceFields
 }).strict().refine(v=>new Date(v.endsAt)>new Date(v.startsAt),{message:'O término deve ser depois do início.'})
+.refine(v=>validEventWindow(v),{message:'Os horários não correspondem ao período escolhido.'})
 .refine(v=>recurrenceValid(v,localDate(v.startsAt)),{message:'Escolha uma repetição válida.'});
 async function ownedCategory(categoryId,userId){
   return (await db.query('SELECT id,legacy_key FROM event_categories WHERE id=$1 AND user_id=$2',[categoryId,userId])).rows[0];
@@ -659,7 +653,6 @@ async function fetchEvents(userId,fromInstant,toInstant){
   for(const e of rows){
     if(e.repeat==='none'){output.push({...e,isRecurring:false});continue;}
     const base=localDate(e.startsAt);
-    // Date window extends one day before, so overnight events are not hidden.
     for(const day of recurringDates(e,base,addDays(from,-2),to)){
       if(cancelled.has(`${e.id}@${day}`))continue;
       const startsAt=occurrenceTimestamp(e.startsAt,base,day);
@@ -689,7 +682,7 @@ app.post('/api/events',asyncRoute(async(req,res)=>{
   const category=await ownedCategory(b.categoryId,req.user.id);
   if(!category)return res.status(400).json({error:'Bloco inválido.'});
   const id=randomUUID();
-  await db.query(`INSERT INTO events(id,user_id,title,starts_at,ends_at,notes,category,category_id,recurrence_type,recurrence_days,recurrence_until) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,[id,req.user.id,b.title,b.startsAt,b.endsAt,b.notes,category.legacy_key||'other',b.categoryId,b.repeat,b.repeatDays,b.repeatUntil]);
+  await db.query(`INSERT INTO events(id,user_id,title,starts_at,ends_at,notes,category,category_id,recurrence_type,recurrence_days,recurrence_until,time_mode) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,[id,req.user.id,b.title,b.startsAt,b.endsAt,b.notes,category.legacy_key||'other',b.categoryId,b.repeat,b.repeatDays,b.repeatUntil,b.timeMode]);
   const row=(await db.query(`${eventQueryBase} WHERE e.id=$1 AND e.user_id=$2`,[id,req.user.id])).rows[0];
   res.status(201).json(row);
 }));
@@ -697,7 +690,7 @@ app.put('/api/events/:id',uuidRoute,asyncRoute(async(req,res)=>{
   const b=validate(eventSchema,req,res);if(!b)return;
   const category=await ownedCategory(b.categoryId,req.user.id);
   if(!category)return res.status(400).json({error:'Bloco inválido.'});
-  const updated=await db.query(`UPDATE events SET title=$1,starts_at=$2,ends_at=$3,notes=$4,category=$5,category_id=$6,recurrence_type=$7,recurrence_days=$8,recurrence_until=$9 WHERE id=$10 AND user_id=$11`,[b.title,b.startsAt,b.endsAt,b.notes,category.legacy_key||'other',b.categoryId,b.repeat,b.repeatDays,b.repeatUntil,req.params.id,req.user.id]);
+  const updated=await db.query(`UPDATE events SET title=$1,starts_at=$2,ends_at=$3,notes=$4,category=$5,category_id=$6,recurrence_type=$7,recurrence_days=$8,recurrence_until=$9,time_mode=$10 WHERE id=$11 AND user_id=$12`,[b.title,b.startsAt,b.endsAt,b.notes,category.legacy_key||'other',b.categoryId,b.repeat,b.repeatDays,b.repeatUntil,b.timeMode,req.params.id,req.user.id]);
   if(!updated.rowCount)return res.status(404).json({error:'Compromisso não encontrado.'});
   res.json((await db.query(`${eventQueryBase} WHERE e.id=$1 AND e.user_id=$2`,[req.params.id,req.user.id])).rows[0]);
 }));
@@ -749,7 +742,7 @@ app.get(
         pythonOnline = true;
       }
     } catch (_) {
-      /* O app continua funcionando sem serviço de análises. */
+      
     }
 
     const habitRows = await db.query(
@@ -803,7 +796,7 @@ app.get(
         habitPythonOnline = true;
       }
     } catch (_) {
-      /* A análise de tarefas segue disponível. */
+      
     }
     res.json({
       days,

@@ -1128,7 +1128,7 @@ textarea {
   }
 }
 
-/* Pattern 0.2 — planejamento do dia */
+
 .hero-actions {
   display: flex;
   align-items: center;
@@ -1383,7 +1383,7 @@ textarea {
   }
 }
 
-/* Pattern v0.3 — calendário mensal e semanal interativo */
+
 .calendar-heading {
   margin-bottom: 24px;
 }
@@ -1800,7 +1800,7 @@ textarea {
   }
 }
 
-/* Pattern v0.4 — Hábitos, rotinas e análise de consistência */
+
 .habit-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2123,7 +2123,7 @@ textarea {
   border-color: #e8ddf5;
 }
 
-/* Pattern v0.5 — recorrências, categorias pessoais e confirmação de exclusão */
+
 .calendar-categories-row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
 .calendar-categories-row .calendar-legend{flex:1;padding:3px 0;border-top:0}
 .calendar-categories-row .btn{font-size:11px;min-height:33px;padding:7px 12px}
@@ -2155,5 +2155,9 @@ textarea {
 .btn-danger{background:#bd5767;color:white}
 .btn-danger:hover{background:#a74355}
 @media (max-width:700px){.repeat-days{gap:3px}.repeat-days label{font-size:9px}.calendar-categories-row{align-items:flex-start}.category-modal{width:calc(100% - 20px)}}
-/* O display:flex dos formulários não deve sobrescrever o atributo HTML hidden. */
+
 .form-stack [hidden], .modal [hidden] {display:none !important}
+
+#eventExactFields[hidden],#eventDateField[hidden],#eventTimeHelp[hidden]{display:none!important}
+#eventTimeHelp{background:#f8f5fc;border-radius:10px;padding:11px 13px;color:#8777a0}
+.repeat-weekdays .repeat-days label:has(input:checked){background:#ede5f9;border-color:#b5a0e3;color:#6d529e}

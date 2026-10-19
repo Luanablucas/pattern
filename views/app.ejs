@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=0.5.0" />
-  <script defer src="/static/js/habit-utils.js?v=0.5.0"></script>
-  <script defer src="/static/js/app.js?v=0.5.0"></script>
+  <link rel="stylesheet" href="/static/css/style.css?v=0.5.1" />
+  <script defer src="/static/js/habit-utils.js?v=0.5.1"></script>
+  <script defer src="/static/js/app.js?v=0.5.1"></script>
 </head>
 <body data-page="<%= page %>">
   <div class="shell">
@@ -100,8 +100,8 @@
   </div>
 
   <dialog id="taskDialog" class="modal"><form id="taskForm" class="form-stack"><input type="hidden" name="id" /><div class="modal-title"><div><p class="eyebrow">PLANEJE COM CALMA</p><h2 id="taskDialogTitle">Nova tarefa</h2></div><button type="button" class="dialog-close" data-close="taskDialog" aria-label="Fechar">×</button></div><label>Nome da tarefa<input name="title" required maxlength="160" placeholder="Ex.: Revisar projeto Pattern" /></label><label>Detalhes (opcional)<textarea name="notes" rows="3" maxlength="2000" placeholder="Alguma observação importante?"></textarea></label><div class="modal-fields"><label>Data limite<input type="date" name="dueDate" /></label><label>Prioridade<select name="priority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label></div>
-    <label>Repetir tarefa<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Semanalmente</option><option value="monthly">Todo mês</option></select></label>
-    <fieldset class="repeat-weekdays" data-repeat-days="task" hidden><legend>Repetir nestes dias</legend><div class="repeat-days"></div></fieldset>
+    <label>Repetir tarefa<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Dias específicos da semana</option><option value="monthly">Todo mês</option></select></label>
+    <fieldset class="repeat-weekdays" data-repeat-days="task" hidden><legend>Escolha os dias da semana</legend><div class="repeat-days"></div></fieldset>
     <label data-repeat-until="task" hidden>Repetir até (opcional)<input type="date" name="repeatUntil" /></label>
     <p class="muted small repeat-info" data-repeat-message="task" hidden>As alterações de uma tarefa recorrente afetam a série. As realizações de cada dia são registradas separadamente.</p>
     <p class="error-message" id="taskError" role="alert" hidden></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-close="taskDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar tarefa</button></div></form></dialog>
@@ -109,10 +109,13 @@
     <input type="hidden" name="id" />
     <div class="modal-title"><div><p class="eyebrow">RESERVE UM TEMPO</p><h2 id="eventDialogTitle">Novo compromisso</h2></div><button type="button" class="dialog-close" data-close="eventDialog" aria-label="Fechar">×</button></div>
     <label>Compromisso<input name="title" required maxlength="160" placeholder="Ex.: Consulta, aula, reunião" /></label>
-    <div class="modal-fields"><label>Início<input name="startsAt" type="datetime-local" required /></label><label>Término<input name="endsAt" type="datetime-local" required /></label></div>
+    <label>Quando acontece?<select name="timeMode" id="eventTimeMode" required><option value="exact">Horário definido</option><option value="all_day">Dia inteiro (sem horário de término)</option><option value="morning">Manhã · 06:00–12:00</option><option value="afternoon">Tarde · 12:00–18:00</option><option value="night">Noite · 18:00–00:00</option></select></label>
+    <div class="modal-fields" id="eventExactFields"><label>Início<input name="startsAt" type="datetime-local" required /></label><label>Término<input name="endsAt" type="datetime-local" required /></label></div>
+    <label id="eventDateField" hidden>Data do compromisso<input name="eventDate" type="date" /></label>
+    <p class="muted small" id="eventTimeHelp" hidden></p>
     <label>Bloco do compromisso<select name="categoryId" required></select></label>
-    <label>Repetir compromisso<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Semanalmente</option><option value="monthly">Todo mês</option></select></label>
-    <fieldset class="repeat-weekdays" data-repeat-days="event" hidden><legend>Repetir nestes dias</legend><div class="repeat-days"></div></fieldset>
+    <label>Repetir compromisso<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Dias específicos da semana</option><option value="monthly">Todo mês</option></select></label>
+    <fieldset class="repeat-weekdays" data-repeat-days="event" hidden><legend>Escolha os dias da semana</legend><div class="repeat-days"></div></fieldset>
     <label data-repeat-until="event" hidden>Repetir até (opcional)<input type="date" name="repeatUntil" /></label>
     <p class="muted small repeat-info" data-repeat-message="event" hidden>Ao editar um compromisso recorrente, você modifica a série inteira. Para excluir apenas uma data, use o botão Excluir.</p>
     <label>Observações (opcional)<textarea name="notes" rows="2" maxlength="2000" placeholder="Informações para lembrar depois..."></textarea></label>

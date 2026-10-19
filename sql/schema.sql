@@ -30,7 +30,6 @@ CREATE TABLE IF NOT EXISTS habits (
 );
 CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
 
--- v0.4: rotinas agrupam hábitos; a exclusão de uma rotina não apaga os hábitos.
 CREATE TABLE IF NOT EXISTS routines (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -41,7 +40,6 @@ CREATE TABLE IF NOT EXISTS routines (
 );
 CREATE INDEX IF NOT EXISTS idx_routines_user ON routines(user_id);
 
--- Migração incremental: os hábitos existentes continuam diários e sem rotina.
 ALTER TABLE habits ADD COLUMN IF NOT EXISTS schedule_days SMALLINT[] NOT NULL DEFAULT ARRAY[0,1,2,3,4,5,6]::SMALLINT[];
 ALTER TABLE habits ADD COLUMN IF NOT EXISTS preferred_time TIME;
 ALTER TABLE habits ADD COLUMN IF NOT EXISTS goal_per_week SMALLINT NOT NULL DEFAULT 7;
@@ -90,7 +88,6 @@ BEGIN
 END $$;
 CREATE INDEX IF NOT EXISTS idx_events_user_end ON events(user_id, ends_at);
 
--- Pattern v0.5 — recorrências independentes de hábitos e categorias editáveis.
 CREATE TABLE IF NOT EXISTS event_categories (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -137,3 +134,11 @@ CREATE TABLE IF NOT EXISTS event_cancellations (
   occurrence_date DATE NOT NULL,
   PRIMARY KEY(event_id, occurrence_date)
 );
+
+ALTER TABLE events ADD COLUMN IF NOT EXISTS time_mode VARCHAR(12) NOT NULL DEFAULT 'exact';
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='events_time_mode_check' AND conrelid='events'::regclass) THEN
+    ALTER TABLE events ADD CONSTRAINT events_time_mode_check CHECK (time_mode IN ('exact','all_day','morning','afternoon','night'));
+  END IF;
+END $$;
