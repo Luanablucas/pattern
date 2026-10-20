@@ -1154,7 +1154,7 @@ async function init() {
     if (page === "tasks") await refreshTasks();
     if (page === "habits") await refreshHabits();
     if (page === "calendar") {await refreshCategories();await loadCalendarEvents();}
-    if (page === "insights") renderInsights(await api("/api/insights"));
+
   } catch (err) {
     showError(err);
   }

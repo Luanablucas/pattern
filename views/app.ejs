@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=0.7.0" />
+  <link rel="stylesheet" href="/static/css/style.css?v=0.8.0" />
   <script defer src="/static/js/habit-utils.js?v=0.5.1"></script>
-  <script defer src="/static/js/app.js?v=0.7.0"></script>
+  <script defer src="/static/js/app.js?v=0.8.0"></script>
+  <% if (page === "insights") { %><script defer src="/static/js/analytics.js?v=0.8.0"></script><% } %>
   <% if (page === "focus") { %><script defer src="/static/js/focus-core.js?v=0.6.0"></script><script defer src="/static/js/focus.js?v=0.6.0"></script><% } %>
 </head>
 <body data-page="<%= page %>">
@@ -113,10 +114,31 @@
         <section class="panel routines-panel"><div class="panel-header"><div><p class="eyebrow">SEUS RITUAIS</p><h2>Minhas rotinas</h2><p class="muted small">Agrupe hábitos para organizar suas manhãs, noites e momentos livres.</p></div><button class="btn btn-soft" id="newRoutine" type="button">+ Criar rotina</button></div><div id="routineList" class="routine-list"></div></section>
         <section class="panel habits-panel"><div class="panel-header"><div><p class="eyebrow">CONSTÂNCIA, NÃO PERFEIÇÃO</p><h2>Acompanhamento semanal</h2><p class="muted small">Clique nos dias planejados para registrar suas realizações.</p></div></div><div id="habitList" class="habit-cards"><p class="muted">Carregando hábitos...</p></div></section>
       <% } else if (page === 'insights') { %>
-        <section class="page-heading"><div><p class="eyebrow">CONHEÇA SEUS PRÓPRIOS PADRÕES</p><h1>Seus insights <span class="heading-sparkle">✳</span></h1><p class="muted">Os dados servem para entender sua rotina, não para julgar seus dias.</p></div></section>
-        <div class="insights-grid"><section class="panel"><div class="panel-header"><div><p class="eyebrow">ÚLTIMOS 14 DIAS</p><h2>Tarefas concluídas por dia</h2></div></div><div id="insightsChart" class="chart-grid"><p class="muted">Carregando...</p></div></section><section class="panel insight-side"><p class="eyebrow">PATTERN INSIGHTS</p><div class="insight-icon">✦</div><h2>O que seus registros mostram</h2><div id="analysisContent" class="muted">Calculando...</div><p id="insightsStatus" class="small muted"></p></section></div>
-        <section class="panel habit-insights-panel"><div class="panel-header"><div><p class="eyebrow">PADRÕES DE CONSTÂNCIA</p><h2>Hábitos nas últimas 2 semanas</h2></div><span class="progress-sparkle" aria-hidden="true">✧</span></div><div id="habitInsights" class="habit-insight-content"><p class="muted">Carregando análise...</p></div></section>
-        <p class="privacy-note">↗ Os indicadores mostram registros e hábitos planejados; não medem seu valor ou produtividade total. A frequência histórica é estimada pela programação atual.</p>
+        <section class="page-heading analytics-heading">
+          <div><p class="eyebrow">DESCUBRA SEUS PADRÕES</p><h1>Pattern Analytics <span class="heading-sparkle">✳</span></h1><p class="muted">Seu planejamento, suas realizações e o tempo dedicado ao que importa.</p></div>
+          <div class="analytics-period" role="group" aria-label="Período da análise">
+            <button type="button" class="tab" data-analytics-days="7">7 dias</button>
+            <button type="button" class="tab" data-analytics-days="14">14 dias</button>
+            <button type="button" class="tab active" data-analytics-days="30">30 dias</button>
+            <button type="button" class="tab" data-analytics-days="90">90 dias</button>
+          </div>
+        </section>
+        <p class="analytics-status muted small" id="analyticsStatus" role="status" aria-live="polite">Carregando seus registros...</p>
+        <section class="analytics-overview" id="analyticsOverview" aria-label="Indicadores do período"></section>
+        <div class="analytics-main-grid">
+          <section class="panel analytics-panel"><div class="panel-header"><div><p class="eyebrow">EVOLUÇÃO</p><h2>Seu tempo de foco</h2><p class="muted small">Tempo registrado por dia de término</p></div></div><div id="analyticsFocusChart" class="analytics-chart" role="img" aria-label="Gráfico de foco"></div></section>
+          <section class="panel analytics-panel"><div class="panel-header"><div><p class="eyebrow">REALIZAÇÕES</p><h2>Tarefas concluídas</h2><p class="muted small">Conclusões registradas em cada dia</p></div></div><div id="analyticsTasksChart" class="analytics-chart" role="img" aria-label="Gráfico de tarefas"></div></section>
+        </div>
+        <div class="analytics-main-grid">
+          <section class="panel analytics-panel"><div class="panel-header"><div><p class="eyebrow">CONSTÂNCIA</p><h2>Hábitos planejados e realizados</h2></div></div><div id="analyticsHabitProgress" class="analytics-habits"></div><div id="analyticsHabitHeatmap" class="analytics-heatmap" role="img" aria-label="Mapa de hábitos"></div></section>
+          <section class="panel analytics-panel"><div class="panel-header"><div><p class="eyebrow">PLANEJAMENTO</p><h2>Tempo reservado por bloco</h2><p class="muted small">Compromissos agendados, não tempo efetivamente gasto</p></div></div><div id="analyticsCategories" class="analytics-categories"></div></section>
+        </div>
+        <div class="analytics-main-grid">
+          <section class="panel analytics-panel"><div class="panel-header"><div><p class="eyebrow">CONCENTRAÇÃO</p><h2>Horário de início das sessões</h2><p class="muted small">Distribuição do tempo por hora de início</p></div></div><div id="analyticsHours" class="analytics-hours"></div></section>
+          <section class="panel analytics-panel"><div class="panel-header"><div><p class="eyebrow">TEMPO DEDICADO</p><h2>Tarefas com mais foco</h2></div></div><div id="analyticsFocusTasks" class="analytics-focus-tasks"></div></section>
+        </div>
+        <section class="panel analytics-insight-panel"><div class="panel-header"><div><p class="eyebrow">LEITURA DOS DADOS</p><h2>O que seus registros mostram ✦</h2></div><span class="progress-sparkle" aria-hidden="true">✳</span></div><div id="analyticsInsights" class="analytics-insights"></div><p id="analyticsMethod" class="muted small"></p></section>
+        <p class="privacy-note">Os indicadores representam dados registrados, não medem seu valor nem sua produtividade total. As estimativas históricas de hábitos e tarefas recorrentes usam a programação atual. Compromissos sobrepostos podem somar mais tempo que a duração do dia; eventos de dia inteiro contam como 24 horas agendadas.</p>
       <% } %>
     </main>
   </div>
