@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=0.8.0" />
-  <script defer src="/static/js/habit-utils.js?v=0.5.1"></script>
-  <script defer src="/static/js/app.js?v=0.8.0"></script>
-  <% if (page === "insights") { %><script defer src="/static/js/analytics.js?v=0.8.0"></script><% } %>
-  <% if (page === "focus") { %><script defer src="/static/js/focus-core.js?v=0.6.0"></script><script defer src="/static/js/focus.js?v=0.6.0"></script><% } %>
+  <link rel="stylesheet" href="<%= assetUrl("/static/css/style.css") %>" />
+  <script defer src="<%= assetUrl("/static/js/habit-utils.js") %>"></script>
+  <script defer src="<%= assetUrl("/static/js/app.js") %>"></script>
+  <% if (page === "insights") { %><script defer src="<%= assetUrl("/static/js/analytics.js") %>"></script><% } %>
+  <% if (page === "focus") { %><script defer src="<%= assetUrl("/static/js/focus-core.js") %>"></script><script defer src="<%= assetUrl("/static/js/focus.js") %>"></script><% } %>
 </head>
 <body data-page="<%= page %>">
   <div class="shell">

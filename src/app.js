@@ -5,15 +5,24 @@ const helmet=require("helmet");
 const cookieParser=require("cookie-parser");
 const {verifyApiOrigin}=require("./middleware/api");
 const {requireAuth}=require("./middleware/auth");
+const {assetUrl}=require("./utils/assets");
 
 function createApp(db) {
   const app=express();
   app.set("view engine","ejs");
+  app.locals ??= {};
+  app.locals.assetUrl=assetUrl;
   app.set("views",path.join(__dirname,"..","views"));
   app.disable("x-powered-by");
   app.use(helmet());
   app.use(express.json({limit:"24kb"}));
   app.use(cookieParser());
+  app.use((req,res,next)=>{
+    if(req.method==="GET" && !req.path.startsWith("/api/") && !req.path.startsWith("/static/")) {
+      res.setHeader("Cache-Control","no-store");
+    }
+    next();
+  });
   app.use("/static",express.static(path.join(__dirname,"..","public"),{maxAge:"2h"}));
   app.use("/api",verifyApiOrigin);
   require("./routes/pages")(app,db);
