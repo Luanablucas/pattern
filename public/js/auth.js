@@ -4,9 +4,15 @@ const params=new URLSearchParams(window.location.search);
 const mode=form?.dataset.mode;
 const notify=(element,message)=>{element.textContent=message;element.hidden=false;};
 async function request(path,body){
-  const response=await fetch(path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
-  const data=await response.json();
-  if(!response.ok)throw new Error(data.error||"Não foi possível concluir a ação.");
+  let response;
+  try{
+    response=await fetch(path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  }catch(error){
+    throw new Error("Não foi possível conectar ao servidor. Verifique sua conexão e se o Node.js está em execução.");
+  }
+  const data=await response.json().catch(()=>null);
+  if(!response.ok)throw new Error(data?.error||`Não foi possível concluir a ação (HTTP ${response.status}). Confira o terminal do Node.js.`);
+  if(!data)throw new Error("O servidor retornou uma resposta inesperada. Confira o terminal do Node.js.");
   return data;
 }
 if(form){

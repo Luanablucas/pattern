@@ -32,14 +32,15 @@
         <a href="/intelligence" class="nav-link <%= page === 'intelligence' ? 'active' : '' %>"><span class="nav-icon">✧</span> Inteligência</a>
         <a href="/review" class="nav-link <%= page === 'review' ? 'active' : '' %>"><span class="nav-icon">◫</span> Retrospectiva</a>
         <a href="/insights" class="nav-link <%= page === 'insights' ? 'active' : '' %>"><span class="nav-icon">◫</span> Insights</a>
-        <a href="/settings" class="nav-link <%= page === 'settings' ? 'active' : '' %>"><span class="nav-icon">⚙</span> Minha conta</a>
       </nav>
       <div class="sidebar-bottom">
         <div class="gentle-note"><span>✦</span><p>Pequenos passos também são progresso.</p></div>
-        <div class="profile">
-          <div class="avatar"><%= name.charAt(0).toUpperCase() %></div>
-          <a class="profile-name" href="/settings"><strong><%= name %></strong><span>Configurações da conta →</span></a>
-          <button class="logout" id="logoutBtn" title="Sair" aria-label="Sair">↗</button>
+        <div class="profile <%= page === 'settings' ? 'profile-selected' : '' %>">
+          <a class="profile-link" href="/settings" aria-label="Abrir Minha conta">
+            <span class="avatar"><%= name.charAt(0).toUpperCase() %></span>
+            <span class="profile-name"><strong><%= name %></strong><span>Minha conta →</span></span>
+          </a>
+          <button class="logout" id="logoutBtn" type="button" title="Sair" aria-label="Sair">↗</button>
         </div>
       </div>
     </aside>

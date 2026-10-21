@@ -394,3 +394,15 @@ html[data-theme="dark"] .account-feedback{background:#203c31;color:#a8edc9;borde
 html[data-theme="dark"] .account-error{color:#f1aebb!important}
 @media(max-width:900px){.account-grid{grid-template-columns:1fr}}
 @media(max-width:650px){.account-session{align-items:flex-start;flex-direction:column}.account-session .btn{width:100%}.account-panel-title .btn{width:100%}}
+
+.profile-link{display:flex;flex:1;min-width:0;align-items:center;gap:11px;padding:7px;border-radius:12px;transition:background-color .18s ease,color .18s ease}
+.profile-link:hover,.profile-link:focus-visible,.profile-selected .profile-link{background:var(--violet-soft);color:var(--violet-dark)}
+.profile-link .avatar{flex:0 0 38px}
+.profile-link .profile-name{min-width:0}
+.profile-link .profile-name span{color:var(--muted)}
+.profile-link:hover .profile-name span,.profile-selected .profile-link .profile-name span{color:var(--violet-dark)}
+.profile .logout{flex-shrink:0;padding:8px;border-radius:10px;transition:background-color .18s ease}
+.profile .logout:hover{background:var(--violet-soft);color:var(--violet-dark)}
+html[data-theme="dark"] .profile-link:hover,html[data-theme="dark"] .profile-link:focus-visible,html[data-theme="dark"] .profile-selected .profile-link{background:#403250;color:#f1e9ff}
+html[data-theme="dark"] .profile-link:hover .profile-name span,html[data-theme="dark"] .profile-selected .profile-link .profile-name span{color:#d6c2f0}
+@media(max-width:700px){.sidebar-bottom{margin-top:12px}.sidebar-bottom .profile{display:flex;padding:10px 4px 0}.sidebar-bottom .profile .profile-link{padding:6px}.sidebar-bottom .profile .avatar{width:34px;height:34px;flex-basis:34px}}
