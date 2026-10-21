@@ -31,7 +31,7 @@ function requireAuth(db){
       const user=await getUser(req,db);
       if(!user)return res.status(401).json({error:"Faça login para continuar."});
       req.user=user;
-      if(process.env.EMAIL_VERIFICATION_REQUIRED==="true"&&!user.email_verified_at&&!req.originalUrl?.startsWith("/api/account")&&!req.originalUrl?.startsWith("/api/auth/resend-verification")&&!req.originalUrl?.startsWith("/api/auth/logout")&&!req.originalUrl?.startsWith("/api/theme"))return res.status(403).json({error:"Confirme seu e-mail em Minha conta para continuar."});
+      if(!user.email_verified_at&&!req.originalUrl?.startsWith("/api/auth/resend-verification")&&!req.originalUrl?.startsWith("/api/auth/logout")&&!req.originalUrl?.startsWith("/api/theme"))return res.status(403).json({error:"Confirme seu e-mail antes de utilizar o Pattern."});
       next();
     }catch(error){next(error);}
   };
@@ -41,7 +41,7 @@ function requirePageAuth(db){
     try{
       req.user=await getUser(req,db);
       if(!req.user)return res.redirect("/login");
-      if(process.env.EMAIL_VERIFICATION_REQUIRED==="true"&&!req.user.email_verified_at&&req.path!=="/settings")return res.redirect("/settings");
+      if(!req.user.email_verified_at)return res.redirect("/verify-pending");
       res.set("Cache-Control","no-store");
       next();
     }catch(error){next(error);}

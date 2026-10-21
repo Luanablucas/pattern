@@ -23,7 +23,7 @@ async function loadProfile(){
 }
 async function loadSessions(){
   const sessions=await api("/api/account/sessions");
-  $("accountSessions").innerHTML=sessions.length?sessions.map(s=>`<article class="account-session"><div><strong>${esc(s.userAgent)}</strong><p class="muted small">Iniciada em ${new Date(s.createdAt).toLocaleString("pt-BR")}</p><span class="muted small">${s.current?"● Este dispositivo":"Outro dispositivo"}</span></div><button class="btn btn-soft" type="button" data-revoke="${esc(s.id)}">${s.current?"Sair deste dispositivo":"Encerrar sessão"}</button></article>`).join(""):'<p class="muted small">Nenhuma sessão ativa.</p>';
+  $("accountSessions").innerHTML=sessions.length?sessions.map(s=>`<article class="account-session"><div><strong>${esc(s.userAgent)}</strong><p class="muted small">Iniciada em ${new Date(s.createdAt).toLocaleString("pt-BR")}</p><span class="muted small">${s.current?"● Este dispositivo":"Outra sessão"}</span></div><button class="btn btn-soft" type="button" data-revoke="${esc(s.id)}">${s.current?"Sair deste dispositivo":"Encerrar sessão"}</button></article>`).join(""):'<p class="muted small">Nenhuma sessão ativa.</p>';
 }
 async function submit(formId,path,success){
   const form=$(formId);
@@ -56,7 +56,7 @@ $("accountSessions").addEventListener("click",async(event)=>{
   }catch(error){notice(error.message,true);}
 });
 $("revokeOtherSessions").addEventListener("click",async()=>{
-  if(!window.confirm("Encerrar todos os outros dispositivos?"))return;
+  if(!window.confirm("Encerrar todas as outras sessões?"))return;
   try{const result=await api("/api/account/sessions/revoke-others",{method:"POST",body:{}});notice(`${result.ended} sessão(ões) encerrada(s).`);await loadSessions();}
   catch(error){notice(error.message,true);}
 });

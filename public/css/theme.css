@@ -409,3 +409,8 @@ html[data-theme="dark"] .profile-link:hover .profile-name span,html[data-theme="
 
 .logout-confirm-mark{background:#eee8fb;color:#7a59b9}
 html[data-theme="dark"] .logout-confirm-mark{background:#3b304d;color:#e5d0ff}
+
+.auth-pending-email{word-break:break-word;padding:12px 14px;border-radius:12px;background:var(--surface-soft,#f3ecfa);margin:14px 0;text-align:center}
+.auth-pending-actions{display:grid;gap:10px;margin-top:18px}
+.auth-pending-actions .btn{justify-content:center;text-align:center}
+html[data-theme="dark"] .auth-pending-email{background:#3a3147;color:#f4ecfa}

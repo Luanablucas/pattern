@@ -13,7 +13,7 @@ function setup(rows=[]){
     bcryptjs:{compare:async(pass,hash)=>pass==="senha-valida"&&hash==="hash",hash:async()=>"new-hash"},
     "../validation/common":{safeText:()=>dummy},
     "../middleware/api":{validate:(_schema,req)=>req.body},
-    "../middleware/auth":{issueCookie:(res,user,sid)=>cookies.push({user,sid}),clearCookie:()=>{}},
+    "../middleware/auth":{issueCookie:(res,user,sid)=>cookies.push({user,sid}),clearCookie:()=>{},getUser:async()=>null},
     "../services/account-security":{
       createSession:async()=>"11111111-1111-4111-8111-111111111111",
       createToken:async()=>"secret",

@@ -27,7 +27,7 @@ if(form){
     const paths={login:"/api/auth/login",register:"/api/auth/register",forgot:"/api/auth/forgot-password",reset:"/api/auth/reset-password"};
     try{
       const result=await request(paths[mode],body);
-      if(mode==="login"||mode==="register")window.location.assign(mode==="register"?"/settings":"/app");
+      if(mode==="login"||mode==="register")window.location.assign(mode==="register"&&!result.emailSent?"/verify-pending?delivery=failed":result.redirect||"/verify-pending");
       else{
         notify(success,result.message||"Solicitação realizada.");
         if(mode==="reset"){button.hidden=true;form.elements.password.value="";}
@@ -45,11 +45,31 @@ if(document.querySelector("#verifyStatus")){
     const endpoint=params.get("purpose")==="change_email"?"/api/auth/confirm-new-email":"/api/auth/verify-email";
     try{
       const result=await request(endpoint,{token});
-      notify(status,result.message+" Você pode entrar no Pattern.");
-      button.hidden=true;
       window.history.replaceState({},"",window.location.pathname);
+      notify(status,"E-mail confirmado! Abrindo o Pattern...");
+      button.hidden=true;
+      window.location.replace(result.redirect||"/app");
     }catch(error){notify(status,error.message);button.hidden=false;}
   }
   button.addEventListener("click",verify);
   verify();
+}
+
+if(document.querySelector("#pendingStatus")){
+  const status=document.querySelector("#pendingStatus");
+  const resend=document.querySelector("#pendingResend");
+  const logout=document.querySelector("#pendingLogout");
+  resend.addEventListener("click",async()=>{
+    resend.disabled=true;
+    try{
+      const result=await request("/api/auth/resend-verification",{});
+      notify(status,result.message);
+    }catch(error){notify(status,error.message);}
+    finally{resend.disabled=false;}
+  });
+  logout.addEventListener("click",async()=>{
+    logout.disabled=true;
+    try{await request("/api/auth/logout",{});window.location.assign("/login");}
+    catch(error){notify(status,error.message);logout.disabled=false;}
+  });
 }

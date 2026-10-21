@@ -4,7 +4,7 @@ const bcrypt=require("bcryptjs");
 const {randomUUID}=require("node:crypto");
 const {safeText}=require("../validation/common");
 const {validate}=require("../middleware/api");
-const {issueCookie,clearCookie}=require("../middleware/auth");
+const {issueCookie,clearCookie,getUser}=require("../middleware/auth");
 const {createSession,createToken,consumeToken,normalizeEmail}=require("../services/account-security");
 const {sendAccountEmail}=require("../services/email");
 
@@ -14,6 +14,12 @@ const genericReset="Se o e-mail estiver cadastrado, você receberá as instruç�
 const genericVerification="Se a conta precisar de confirmação, enviaremos um e-mail com as instruções.";
 
 module.exports=function createAuthController(db){
+  async function replaceBrowserSession(req,userId){
+    const previous=await getUser(req,db);
+    if(previous?.id===userId){
+      await db.query("UPDATE auth_sessions SET revoked_at=NOW() WHERE id=$1 AND user_id=$2 AND revoked_at IS NULL",[previous.sid,userId]);
+    }
+  }
   async function deliver(address,purpose,userId,emailValue=null){
     const token=await createToken(db,userId,purpose,emailValue);
     try{return await sendAccountEmail(address,purpose,token);}
@@ -35,10 +41,11 @@ module.exports=function createAuthController(db){
       ('study','Estudos','#8e77d2'),('work','Trabalho','#73a1cf'),
       ('personal','Pessoal','#d68bab'),('health','Saúde','#75aa96'),
       ('other','Outros','#d5a26b')) AS v(key,name,color) ON CONFLICT DO NOTHING`,[user.id]);
+    const emailSent=await deliver(user.email,"verify_email",user.id);
+    await replaceBrowserSession(req,user.id);
     const sid=await createSession(db,user,req);
     issueCookie(res,user,sid);
-    const emailSent=await deliver(user.email,"verify_email",user.id);
-    res.status(201).json({ok:true,emailSent});
+    res.status(201).json({ok:true,emailSent,verified:false,redirect:"/verify-pending"});
   }
   async function login(req,res){
     const body=validate(z.object({email,password:z.string()}).strict(),req,res);
@@ -46,9 +53,11 @@ module.exports=function createAuthController(db){
     const {rows}=await db.query("SELECT id,name,password_hash,email_verified_at FROM users WHERE email=$1",[body.email]);
     const valid=rows[0]?await bcrypt.compare(body.password,rows[0].password_hash):await bcrypt.compare(body.password,"$2a$12$8sJNJVTSyxYypqgrTvIGc.etNCJUazmfVCY2tkrwepYXXo5cfZNqS");
     if(!rows[0]||!valid)return res.status(401).json({error:"E-mail ou senha incorretos."});
+    await replaceBrowserSession(req,rows[0].id);
     const sid=await createSession(db,rows[0],req);
     issueCookie(res,rows[0],sid);
-    res.json({ok:true,verified:Boolean(rows[0].email_verified_at)});
+    const verified=Boolean(rows[0].email_verified_at);
+    res.json({ok:true,verified,redirect:verified?"/app":"/verify-pending"});
   }
   async function logout(req,res){
     await db.query("UPDATE auth_sessions SET revoked_at=NOW() WHERE id=$1 AND user_id=$2",[req.user.sid,req.user.id]);
@@ -79,12 +88,23 @@ module.exports=function createAuthController(db){
   async function verifyEmail(req,res){
     const body=validate(z.object({token:z.string()}).strict(),req,res);
     if(!body)return;
+    const previous=await getUser(req,db);
+    let verifiedUser=null;
+    let sid=null;
     const result=await consumeToken(db,body.token,"verify_email",async(client,token)=>{
-      await client.query("UPDATE users SET email_verified_at=NOW() WHERE id=$1",[token.user_id]);
+      const {rows}=await client.query("UPDATE users SET email_verified_at=NOW() WHERE id=$1 AND email_verified_at IS NULL RETURNING id,name,email",[token.user_id]);
+      if(!rows[0])return false;
+      verifiedUser=rows[0];
+      await client.query("UPDATE auth_tokens SET used_at=NOW() WHERE user_id=$1 AND purpose=$2 AND used_at IS NULL",[verifiedUser.id,"verify_email"]);
+      if(previous?.id===verifiedUser.id){
+        await client.query("UPDATE auth_sessions SET revoked_at=NOW() WHERE id=$1 AND user_id=$2 AND revoked_at IS NULL",[previous.sid,verifiedUser.id]);
+      }
+      sid=await createSession(client,verifiedUser,req);
       return true;
     });
     if(!result.ok)return res.status(400).json({error:"Link inválido ou expirado. Solicite outro."});
-    res.json({ok:true,message:"E-mail confirmado com sucesso."});
+    issueCookie(res,verifiedUser,sid);
+    res.json({ok:true,message:"E-mail confirmado com sucesso.",redirect:"/app"});
   }
   async function verifyChangedEmail(req,res){
     const body=validate(z.object({token:z.string()}).strict(),req,res);

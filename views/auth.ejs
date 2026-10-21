@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <meta name="referrer" content="no-referrer" />
-  <title><%= {login:'Entrar',register:'Criar conta',forgot:'Recuperar senha',reset:'Nova senha',verify:'Confirmar e-mail'}[mode] %> — Pattern</title>
+  <title><%= {login:'Entrar',register:'Criar conta',forgot:'Recuperar senha',reset:'Nova senha',verify:'Confirmar e-mail',pending:'Verifique seu e-mail'}[mode] %> — Pattern</title>
   <script src="<%= assetUrl('/static/js/theme.js') %>"></script>
   <link rel="stylesheet" href="<%= assetUrl('/static/css/style.css') %>" />
   <link rel="stylesheet" href="<%= assetUrl('/static/css/theme.css') %>" />
@@ -18,9 +18,9 @@
     <a class="auth-logo" href="/">✳ <span>pattern<span class="logo-dot">.</span></span></a>
     <section class="auth-card">
       <p class="eyebrow">SEU ESPAÇO DE ORGANIZAÇÃO</p>
-      <h1><%= {login:'Que bom ter você aqui.',register:'Comece no seu ritmo.',forgot:'Vamos recuperar seu acesso.',reset:'Escolha sua nova senha.',verify:'Confirme seu e-mail.'}[mode] %></h1>
-      <p class="muted"><%= {login:'Um dia de cada vez, com um pouco mais de clareza.',register:'Planeje seus dias, acompanhe hábitos e descubra seus próprios padrões.',forgot:'Se o endereço estiver cadastrado, enviaremos um link de recuperação.',reset:'Use uma senha exclusiva com pelo menos 10 caracteres.',verify:'Confirme seu endereço para manter sua conta atualizada.'}[mode] %></p>
-      <% if (mode !== 'verify') { %>
+      <h1><%= {login:'Que bom ter você aqui.',register:'Comece no seu ritmo.',forgot:'Vamos recuperar seu acesso.',reset:'Escolha sua nova senha.',verify:'Confirme seu e-mail.',pending:'Falta só confirmar seu e-mail.'}[mode] %></h1>
+      <p class="muted"><%= {login:'Um dia de cada vez, com um pouco mais de clareza.',register:'Planeje seus dias, acompanhe hábitos e descubra seus próprios padrões.',forgot:'Se o endereço estiver cadastrado, enviaremos um link de recuperação.',reset:'Use uma senha exclusiva com pelo menos 10 caracteres.',verify:'Confirme seu endereço para manter sua conta atualizada.',pending:'Para ativar sua conta, abra o link de confirmação recebido por e-mail.'}[mode] %></p>
+      <% if (mode !== 'verify' && mode !== 'pending') { %>
       <form id="authForm" data-mode="<%= mode %>" class="form-stack">
         <% if (mode === 'register') { %><label>Seu nome<input name="name" autocomplete="name" maxlength="80" minlength="2" required placeholder="Como podemos chamar você?" /></label><% } %>
         <% if (mode === 'login' || mode === 'register' || mode === 'forgot') { %><label>E-mail<input name="email" type="email" autocomplete="email" required placeholder="voce@email.com" /></label><% } %>
@@ -30,8 +30,20 @@
         <p class="account-feedback" id="formSuccess" role="status" hidden></p>
         <button class="btn btn-primary full" id="submitButton" type="submit"><%= {login:'Entrar no Pattern',register:'Criar minha conta',forgot:'Enviar link de recuperação',reset:'Salvar nova senha'}[mode] %> <span>↗</span></button>
       </form>
-      <% } else { %><p class="muted" id="verifyStatus" role="status">Confirmando seu endereço...</p><button type="button" class="btn btn-primary full" id="verifyButton" hidden>Tentar novamente</button><% } %>
-      <p class="auth-bottom"><% if (mode === 'login') { %><a href="/forgot-password">Esqueci minha senha</a> · <a href="/register">Criar conta</a><% } else { %><a href="/login">Voltar para entrar</a><% } %></p>
+      <% } else if (mode === 'verify') { %>
+        <p class="muted" id="verifyStatus" role="status">Confirmando seu endereço...</p><button type="button" class="btn btn-primary full" id="verifyButton" hidden>Tentar novamente</button>
+      <% } else { %>
+        <p class="auth-pending-email"><strong><%= pendingEmail %></strong></p>
+        <% if (deliveryFailed) { %><p class="error-message" role="alert">A conta foi criada, mas o envio falhou. Use o botão abaixo para tentar novamente.</p><% } %>
+        <p class="muted small">Verifique a caixa de entrada e o spam. O link é válido por 24 horas. Se já confirmou em outra aba, clique em “Já confirmei”.</p>
+        <p class="account-feedback" id="pendingStatus" role="status" hidden></p>
+        <div class="form-stack auth-pending-actions">
+          <a class="btn btn-primary full" href="/app">Já confirmei meu e-mail ↗</a>
+          <button class="btn btn-soft full" type="button" id="pendingResend">Reenviar confirmação</button>
+          <button class="btn btn-soft full" type="button" id="pendingLogout">Sair e usar outra conta</button>
+        </div>
+      <% } %>
+      <p class="auth-bottom"><% if (mode === 'login') { %><a href="/forgot-password">Esqueci minha senha</a> · <a href="/register">Criar conta</a><% } else if (mode !== 'pending') { %><a href="/login">Voltar para entrar</a><% } %></p>
     </section>
     <p class="fineprint">A organização deve caber na sua vida — não o contrário.</p>
   </main>
