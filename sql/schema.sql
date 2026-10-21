@@ -253,3 +253,30 @@ BEGIN
     ALTER TABLE users ADD CONSTRAINT users_theme_preference_check CHECK (theme_preference IN ('light','dark','system'));
   END IF;
 END $$;
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_email VARCHAR(254);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_agent VARCHAR(200) NOT NULL DEFAULT '',
+  ip_address VARCHAR(64) NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_active ON auth_sessions(user_id,expires_at) WHERE revoked_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  purpose VARCHAR(20) NOT NULL CHECK (purpose IN ('verify_email','reset_password','change_email')),
+  email_value VARCHAR(254),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_auth_tokens_user ON auth_tokens(user_id,purpose,expires_at) WHERE used_at IS NULL;
