@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= mode === 'register' ? 'Criar conta' : 'Entrar' %> — Pattern</title>
-  <link rel="stylesheet" href="<%= assetUrl("/static/css/style.css") %>" />
+  <script src="<%= assetUrl('/static/js/theme.js') %>"></script>
+  <link rel="stylesheet" href="<%= assetUrl('/static/css/style.css') %>" />
+  <link rel="stylesheet" href="<%= assetUrl('/static/css/theme.css') %>" />
   <script defer src="<%= assetUrl("/static/js/auth.js") %>"></script>
 </head>
 <body class="auth-body">
+  <label class="auth-theme-choice theme-choice"><span class="theme-choice-icon" aria-hidden="true">◐</span><select class="theme-select" data-theme-select aria-label="Tema da aplicação"><option value="light">☀ Claro</option><option value="dark">☾ Escuro</option><option value="system">◉ Automático</option></select></label>
   <div class="auth-decor decor-one"></div><div class="auth-decor decor-two"></div>
   <main class="auth-wrap">
     <a class="auth-logo" href="/">✳ <span>pattern<span class="logo-dot">.</span></span></a>

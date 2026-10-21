@@ -1,0 +1,373 @@
+html[data-theme="dark"]{
+  --bg:#181420;
+  --surface:#272132;
+  --ink:#f1eafa;
+  --muted:#bcaecb;
+  --stroke:#44394f;
+  --violet:#b99bed;
+  --violet-dark:#d3b8ff;
+  --violet-soft:#393047;
+  --pink:#392937;
+  --green:#8fd2b1;
+  --shadow:0 12px 38px rgba(0,0,0,.22);
+  color-scheme:dark;
+}
+html[data-theme="dark"] body{background:var(--bg);color:var(--ink)}
+html[data-theme="dark"] .sidebar,html[data-theme="dark"] .panel,html[data-theme="dark"] .stat-card{background:var(--surface);border-color:var(--stroke)}
+html[data-theme="dark"] button:focus-visible,html[data-theme="dark"] a:focus-visible,html[data-theme="dark"] input:focus-visible,html[data-theme="dark"] textarea:focus-visible,html[data-theme="dark"] select:focus-visible{outline:3px solid #604f8c}
+html[data-theme="dark"] .eyebrow{color:#e8def2}
+html[data-theme="dark"] .logo-mark{background:#302a3c}
+html[data-theme="dark"] .logo-dot{color:#c29cd3}
+html[data-theme="dark"] .side-section-label{color:#b5afc0}
+html[data-theme="dark"] .nav-link{color:#e8def2}
+html[data-theme="dark"] .nav-link:hover{background:#292332}
+html[data-theme="dark"] .nav-link.active{background:#302a3c}
+html[data-theme="dark"] .gentle-note{background:#292332;color:#e8def2}
+html[data-theme="dark"] .gentle-note span{color:#af9cd3}
+html[data-theme="dark"] .avatar{background:#322a3c}
+html[data-theme="dark"] .logout{color:#e8def2}
+html[data-theme="dark"] .breadcrumb{color:#e8def2}
+html[data-theme="dark"] .breadcrumb span{color:#b4afc0}
+html[data-theme="dark"] .breadcrumb strong{color:#e8def2}
+html[data-theme="dark"] .topbar-date{color:#e8def2}
+html[data-theme="dark"] .hero-banner{background:linear-gradient(115deg, #322a3c 0%, #382a3c 55%, #3c2a2f 100%)}
+html[data-theme="dark"] .hero-kicker{color:#bbb0d9}
+html[data-theme="dark"] .hero-banner h1{color:#bfb4d5}
+html[data-theme="dark"] .wave{color:#b19cd3}
+html[data-theme="dark"] .hero-banner p{color:#e8def2}
+html[data-theme="dark"] .blob-main{background:radial-gradient(
+    circle at 40% 30%,
+    #292433 0 17%,
+    #40314e 19% 50%,
+    #483762 74%,
+    #3f314e 90%
+  )}
+html[data-theme="dark"] .orbit{color:#f4edff}
+html[data-theme="dark"] .orbit.three{color:#cb9cd3}
+html[data-theme="dark"] .btn-primary{color:#f4edff}
+html[data-theme="dark"] .btn-white{background:#292433;box-shadow:0 8px 15px rgba(0,0,0,0.3)}
+html[data-theme="dark"] .stat-label{color:#e8def2}
+html[data-theme="dark"] .stat-caption{color:#e8def2}
+html[data-theme="dark"] .empty{color:#e8def2;background:#292332;border:1px dashed #4a3d57}
+html[data-theme="dark"] .empty strong{color:#e8def2}
+html[data-theme="dark"] .item-row{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .check{border:1.5px solid #4a3d57;background:#292433}
+html[data-theme="dark"] .item-title.done{color:#e8def2}
+html[data-theme="dark"] .item-meta{color:#e8def2}
+html[data-theme="dark"] .priority-high{background:#3c2b2a;color:#deb3ab}
+html[data-theme="dark"] .priority-medium{background:#322a3c;color:#beacdd}
+html[data-theme="dark"] .priority-low{background:#2a3c31;color:#e8def2}
+html[data-theme="dark"] .mini-button{color:#e8def2}
+html[data-theme="dark"] .mini-button:hover{background:#312a3c}
+html[data-theme="dark"] .quote-bar{background:#2f2a3c;color:#e8def2}
+html[data-theme="dark"] .heading-sparkle{color:#b69cd3}
+html[data-theme="dark"] .tab{color:#e8def2}
+html[data-theme="dark"] .filter-count{color:#e8def2}
+html[data-theme="dark"] .habit-day{color:#b8afc0}
+html[data-theme="dark"] .habit-day button{background:#322a3c;color:#b3a6c9;border:1px solid #4a3d57}
+html[data-theme="dark"] .icon-button{background:#292433}
+html[data-theme="dark"] .calendar-grid{border:1px solid #4a3d57}
+html[data-theme="dark"] .calendar-day{border-right:1px solid #4a3d57}
+html[data-theme="dark"] .calendar-day.today{background:#292332}
+html[data-theme="dark"] .calendar-day-title{color:#e8def2}
+html[data-theme="dark"] .cal-event{background:#322a3c;border-left:3px solid #644f8c;color:#c0b4d5}
+html[data-theme="dark"] .cal-event.appointment{background:#3c2a32;color:#e8def2}
+html[data-theme="dark"] .bar{background:#3e314e}
+html[data-theme="dark"] .bar-item:nth-child(2n) .bar{background:#473762}
+html[data-theme="dark"] .bar-label{color:#e8def2}
+html[data-theme="dark"] .bar-value{color:#e8def2}
+html[data-theme="dark"] .insight-icon{background:#332a3c}
+html[data-theme="dark"] .privacy-note{color:#e8def2}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#292433;border:1px solid #4a3d57}
+html[data-theme="dark"] .form-stack label{color:#e8def2}
+html[data-theme="dark"] .modal{border:1px solid #4a3d57;box-shadow:0 20px 80px rgba(0,0,0,0.3)}
+html[data-theme="dark"] .dialog-close{color:#e8def2}
+html[data-theme="dark"] .error-message{background:#292332;color:#dab2ae}
+html[data-theme="dark"] .toast{background:#3c2d52;color:#f4edff;box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+html[data-theme="dark"] .auth-decor{background:#332a3c}
+html[data-theme="dark"] .decor-two{background:#3c2a34}
+html[data-theme="dark"] .auth-card{background:#292433;box-shadow:0 20px 70px rgba(0,0,0,0.3)}
+html[data-theme="dark"] .auth-bottom{color:#e8def2}
+html[data-theme="dark"] .fineprint{color:#e8def2}
+html[data-theme="dark"] .hero-outline{color:#beb3d6}
+html[data-theme="dark"] .progress-sparkle{background:#312a3c;color:#bba7e2}
+html[data-theme="dark"] .progress-summary{background:#292332;color:#e8def2}
+html[data-theme="dark"] .progress-summary strong{color:#bfb2d6}
+html[data-theme="dark"] .progress-head{color:#e8def2}
+html[data-theme="dark"] .progress-head strong{color:#c0b3d6}
+html[data-theme="dark"] .progress-track{background:#322a3c}
+html[data-theme="dark"] .progress-track > span{background:linear-gradient(90deg, #3c314e, #4c328b)}
+html[data-theme="dark"] .agenda-item{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .agenda-date{background:#292332;color:#beb0d8}
+html[data-theme="dark"] .agenda-date span{color:#e8def2}
+html[data-theme="dark"] .agenda-info span{color:#e8def2}
+html[data-theme="dark"] .agenda-empty{color:#e8def2}
+html[data-theme="dark"] .agenda-empty > span{color:#b79cd3}
+html[data-theme="dark"] .agenda-empty strong{color:#e8def2}
+html[data-theme="dark"] .week-day{border:1px solid #4a3d57;background:#292332;color:#e8def2}
+html[data-theme="dark"] .week-day.is-today{background:#312a3c;border-color:#4a3d57;color:#beb2d6}
+html[data-theme="dark"] .week-day-number{color:#e8def2}
+html[data-theme="dark"] .week-day.is-today .week-day-number{color:#bdabde}
+html[data-theme="dark"] .week-day-dot{background:#3a314e}
+html[data-theme="dark"] .week-day-dot.has-plans{background:#493762}
+html[data-theme="dark"] .week-day small{color:#e8def2}
+html[data-theme="dark"] .week-legend{color:#b7afc0}
+html[data-theme="dark"] .calendar-switch{border:1px solid #4a3d57;background:#292332}
+html[data-theme="dark"] .calendar-switch-btn{color:#e8def2}
+html[data-theme="dark"] .calendar-switch-btn.active{color:#beb0d9;background:#292433;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+html[data-theme="dark"] .calendar-legend{border-top:1px solid #4a3d57}
+html[data-theme="dark"] .cal-legend-item{color:#e8def2}
+html[data-theme="dark"] .legend-dot{background:#3d314e}
+html[data-theme="dark"] .legend-dot.category-study{background:#48318c}
+html[data-theme="dark"] .legend-dot.category-work{background:#315e8c}
+html[data-theme="dark"] .legend-dot.category-personal{background:#623749}
+html[data-theme="dark"] .legend-dot.category-health{background:#487564}
+html[data-theme="dark"] .legend-dot.category-other{background:#8c6031}
+html[data-theme="dark"] .legend-dot.category-task{background:#42354b}
+html[data-theme="dark"] .calendar-help{color:#e8def2}
+html[data-theme="dark"] .calendar-help strong{color:#e8def2}
+html[data-theme="dark"] .calendar-scroll{border:1px solid #4a3d57}
+html[data-theme="dark"] .calendar-scroll:focus-visible{outline:3px solid #4a3d57}
+html[data-theme="dark"] .calendar-weekdays{background:#292332;border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .calendar-weekdays > span{color:#e8def2}
+html[data-theme="dark"] .calendar-day{border-right:1px solid #4a3d57;border-bottom:1px solid #4a3d57;background:#292433}
+html[data-theme="dark"] .calendar-grid .calendar-day.today{background:#292332}
+html[data-theme="dark"] .calendar-grid .calendar-day.outside-month{background:#292332}
+html[data-theme="dark"] .calendar-day.outside-month .calendar-day-num{color:#b7adc3}
+html[data-theme="dark"] .calendar-day.drop-target{background:#312a3c !important;box-shadow:inset 0 0 0 2px rgba(3,2,9,0.45)}
+html[data-theme="dark"] .calendar-day-num{color:#e8def2}
+html[data-theme="dark"] .calendar-add{color:#c1b2d7}
+html[data-theme="dark"] .calendar-day:hover .calendar-add,html[data-theme="dark"] .calendar-add:focus-visible{background:#312a3c}
+html[data-theme="dark"] .calendar-day-free{color:#baafc0}
+html[data-theme="dark"] .cal-entry{border-left:3px solid #664f8c;background:#322a3c;color:#c0b4d5}
+html[data-theme="dark"] .cal-entry:hover,html[data-theme="dark"] .cal-entry:focus-visible{border-color:#4a3d57}
+html[data-theme="dark"] .cal-appointment.category-study{background:#302a3c;color:#bfb1d8}
+html[data-theme="dark"] .cal-appointment.category-work{background:#2a333c;color:#b3c6d5}
+html[data-theme="dark"] .cal-appointment.category-personal{background:#3c2a32;color:#d5b4c6}
+html[data-theme="dark"] .cal-appointment.category-health{background:#2a3c33;color:#e8def2}
+html[data-theme="dark"] .cal-appointment.category-other{background:#3c352a;color:#dcc5ad}
+html[data-theme="dark"] .cal-task{background:#322a3c;color:#e8def2}
+html[data-theme="dark"] .calendar-feedback{color:#e8def2}
+html[data-theme="dark"] .unscheduled-chip{border:1px dashed #4a3d57;color:#e8def2;background:#292332}
+html[data-theme="dark"] .unscheduled-chip > span{color:#c4b4d5}
+html[data-theme="dark"] .btn-danger-outline{border:1px solid #4a3d57;background:#292332;color:#d9afb5}
+html[data-theme="dark"] .btn-danger-outline:hover{background:#3c2a2c}
+html[data-theme="dark"] .habit-overview-card{background:#292433}
+html[data-theme="dark"] .habit-overview-card strong{color:#bdaeda}
+html[data-theme="dark"] .habit-overview-card strong small{color:#e8def2}
+html[data-theme="dark"] .habit-overview-card p{color:#e8def2}
+html[data-theme="dark"] .routine-card{border:1px solid #4a3d57;background:#292332}
+html[data-theme="dark"] .routine-period{color:#bfb2d7;background:#312a3c}
+html[data-theme="dark"] .routine-items{border-top:1px solid #4a3d57}
+html[data-theme="dark"] .routine-step{color:#e8def2}
+html[data-theme="dark"] .routine-step-mark{background:#322a3c;color:#c0addc}
+html[data-theme="dark"] .routine-step-time{color:#e8def2}
+html[data-theme="dark"] .habit-card{border:1px solid #4a3d57;background:#292433}
+html[data-theme="dark"] .habit-metric{background:#292332;color:#e8def2}
+html[data-theme="dark"] .habit-metric.goal-done{background:#2a3c2f;color:#b3d6bf}
+html[data-theme="dark"] .habit-card .habit-day.is-off button{background:#292332;color:#b8afc0;border-color:#4a3d57}
+html[data-theme="dark"] .habit-days-field legend{color:#e8def2}
+html[data-theme="dark"] .day-picker span{border:1px solid #4a3d57;background:#292332;color:#e8def2}
+html[data-theme="dark"] .day-picker input:checked + span{background:#4e328b;color:#f4edff;border-color:#624f8c}
+html[data-theme="dark"] .day-picker input:focus-visible + span{outline:3px solid #4a3d57}
+html[data-theme="dark"] .habit-insight-number{color:#beacdd}
+html[data-theme="dark"] .habit-insight-text{color:#e8def2}
+html[data-theme="dark"] .habit-history{border-top:1px solid #4a3d57}
+html[data-theme="dark"] .habit-history-label{color:#e8def2}
+html[data-theme="dark"] .habit-history-label span{color:#e8def2}
+html[data-theme="dark"] .history-day{background:#292332;border:1px solid #4a3d57}
+html[data-theme="dark"] .history-day.done{background:#523389;border-color:#654f8c}
+html[data-theme="dark"] .history-day.missed{background:#322a3c;border-color:#4a3d57}
+html[data-theme="dark"] .cal-legend-item .legend-dot{background:var(--event-accent,#42354b)}
+html[data-theme="dark"] .cal-entry.cal-appointment{background:color-mix(in srgb,var(--event-accent,#623749) 14%,white);color:#e8def2}
+html[data-theme="dark"] .repeat-badge{color:#c0b1d7;background:#312a3c}
+html[data-theme="dark"] .repeat-weekdays legend{color:#e8def2}
+html[data-theme="dark"] .repeat-days label{background:#292332;border:1px solid #4a3d57}
+html[data-theme="dark"] .category-list-row{border:1px solid #4a3d57}
+html[data-theme="dark"] .category-edit-form{border-top:1px solid #4a3d57}
+html[data-theme="dark"] .confirm-mark{background:#292332;color:#deabb0}
+html[data-theme="dark"] .delete-scope{border:1px solid #4a3d57}
+html[data-theme="dark"] .delete-scope legend{color:#e8def2}
+html[data-theme="dark"] .delete-scope label{color:#e8def2}
+html[data-theme="dark"] .btn-danger{background:#873542}
+html[data-theme="dark"] .btn-danger:hover{background:#873645}
+html[data-theme="dark"] #eventTimeHelp{background:#292332;color:#e8def2}
+html[data-theme="dark"] .repeat-weekdays .repeat-days label:has(input:checked){background:#312a3c;border-color:#4a3d57;color:#bfb2d7}
+html[data-theme="dark"] .focus-modes{background:#292332}
+html[data-theme="dark"] .focus-mode{color:#e8def2}
+html[data-theme="dark"] .focus-mode.is-active{color:#beaeda;box-shadow:0 2px 13px rgba(0,0,0,0.3)}
+html[data-theme="dark"] .focus-setup label{color:#e8def2}
+html[data-theme="dark"] .focus-presets button{border:1px solid #4a3d57;background:#292332;color:#e8def2}
+html[data-theme="dark"] .focus-presets button.is-active{background:#312a3c;color:#baabdd}
+html[data-theme="dark"] .focus-dial{background:conic-gradient(#4f318c 0 var(--focus-percent),#312a3c var(--focus-percent) 100%);box-shadow:0 15px 50px rgba(0,0,0,0.3)}
+html[data-theme="dark"] .focus-dial-caption{color:#e8def2}
+html[data-theme="dark"] .focus-time{color:#c2b2d6}
+html[data-theme="dark"] .focus-dial-status{color:#e8def2}
+html[data-theme="dark"] .focus-current-task{color:#e8def2}
+html[data-theme="dark"] .focus-stats>div{background:#292332}
+html[data-theme="dark"] .focus-stats strong{color:#beaedb}
+html[data-theme="dark"] .focus-stats span{color:#e8def2}
+html[data-theme="dark"] .focus-bar-col>span{color:#e8def2}
+html[data-theme="dark"] .focus-bar{background:linear-gradient(#473762,#51338a)}
+html[data-theme="dark"] .focus-history-row{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .focus-history-symbol{background:#322a3c;color:#beabde}
+html[data-theme="dark"] .focus-history-detail span{color:#e8def2}
+html[data-theme="dark"] .focus-history-duration{color:#bfafd9}
+html[data-theme="dark"] .focus-break-panel{background:#292332;border:1px solid #4a3d57}
+html[data-theme="dark"] .focus-break-panel h3{color:#e8def2}
+html[data-theme="dark"] .focus-break-panel>strong{color:#bfafda}
+html[data-theme="dark"] .dashboard-focus-shortcut{background:linear-gradient(110deg,#292433,#292332)}
+html[data-theme="dark"] .focus-shortcut-icon{background:#312a3c;color:#bfa9e0}
+html[data-theme="dark"] .cal-filter{border:1px solid #4a3d57;background:#292433;color:#e8def2}
+html[data-theme="dark"] .cal-filter .legend-dot{background:var(--event-accent,#42354b)}
+html[data-theme="dark"] .cal-filter.is-selected{color:#beb0d9;border-color:#4a3d57;background:#312a3c}
+html[data-theme="dark"] .day-view{background:#292433}
+html[data-theme="dark"] .day-heading{background:#292332;border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .day-banner{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .day-banner.drop-target{background:#312a3c;outline:2px dashed #644f8c}
+html[data-theme="dark"] .day-banner-event,html[data-theme="dark"] .day-banner-task{border:1px solid #4a3d57;border-left:4px solid var(--event-accent,#684f8c);background:#292332;color:#e8def2}
+html[data-theme="dark"] .day-banner-task{background:#312a3c}
+html[data-theme="dark"] .day-timeline-layout{background:#292433}
+html[data-theme="dark"] .day-timeline-hours{border-right:1px solid #4a3d57}
+html[data-theme="dark"] .day-timeline-hours span{color:#e8def2}
+html[data-theme="dark"] .day-timeline-track{background:repeating-linear-gradient(to bottom,#322a3c 0,#322a3c 1px,#292433 1px,#292433 60px)}
+html[data-theme="dark"] .day-hour-drop.drop-target{outline:1px dashed #634f8c}
+html[data-theme="dark"] .day-time-card{border-left:4px solid var(--event-accent,#734f8c);background:color-mix(in srgb,var(--event-accent,#42354b) 14%,white);color:#e8def2}
+html[data-theme="dark"] .day-time-card.day-focus{background:#2a3c34}
+html[data-theme="dark"] .day-time-card.has-conflict,html[data-theme="dark"] .cal-entry.has-conflict{outline:2px solid #8c6d4f}
+html[data-theme="dark"] .cal-focus{background:#2a3c32;color:#b4d5c8}
+html[data-theme="dark"] .calendar-conflict-summary,html[data-theme="dark"] .calendar-event-warning{background:#3c342a;color:#dfc6aa;border:1px solid #4a3d57}
+html[data-theme="dark"] .calendar-open-day:hover{background:#312a3c;color:#bcaedb}
+html[data-theme="dark"] .analytics-period{border:1px solid #4a3d57;background:#292433}
+html[data-theme="dark"] .analytics-stat{background:#292433}
+html[data-theme="dark"] .analytics-stat strong{color:#beb1d8}
+html[data-theme="dark"] .analytics-bar-track{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .analytics-bar{background:linear-gradient(180deg,#533488,#3f314e)}
+html[data-theme="dark"] .analytics-bar-value{color:#e8def2}
+html[data-theme="dark"] .analytics-bar-date{color:#e8def2}
+html[data-theme="dark"] .analytics-habit-header strong{color:#beacdd}
+html[data-theme="dark"] .analytics-heat-day{border:1px solid #4a3d57;background:#292332}
+html[data-theme="dark"] .analytics-heat-day.low{background:#312a3c}
+html[data-theme="dark"] .analytics-heat-day.mid{background:#3f314e}
+html[data-theme="dark"] .analytics-heat-day.high{background:#473762}
+html[data-theme="dark"] .analytics-heat-day.full{background:#51318c}
+html[data-theme="dark"] .analytics-heat-day.off{background:#292332}
+html[data-theme="dark"] .analytics-heat-legend{color:#e8def2}
+html[data-theme="dark"] .analytics-category-track{background:#322a3c}
+html[data-theme="dark"] .analytics-hour-bar{background:linear-gradient(180deg,#553488,#3d314e)}
+html[data-theme="dark"] .analytics-hour-cell span{color:#e8def2}
+html[data-theme="dark"] .analytics-focus-item{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .analytics-focus-rank{background:#342a3c;color:#c1b0d9}
+html[data-theme="dark"] .analytics-insight{color:#e8def2}
+html[data-theme="dark"] .analytics-insight span{color:#bfaadf}
+html[data-theme="dark"] .goal-stat,html[data-theme="dark"] .review-stat{background:#292433;border:1px solid #4a3d57}
+html[data-theme="dark"] .goal-stat strong,html[data-theme="dark"] .review-stat strong{color:#bcaddc}
+html[data-theme="dark"] .goal-stat p,html[data-theme="dark"] .review-stat small{color:#e8def2}
+html[data-theme="dark"] .goal-card{border:1px solid #4a3d57;background:#292332}
+html[data-theme="dark"] .goal-category,html[data-theme="dark"] .goal-priority{color:#c3b4d5;background:#312a3c}
+html[data-theme="dark"] .goal-priority{background:#352a3c;color:#c8b4d5}
+html[data-theme="dark"] .goal-info{color:#e8def2}
+html[data-theme="dark"] .goal-progress-caption{color:#e8def2}
+html[data-theme="dark"] .goal-progress-caption span{color:#e8def2}
+html[data-theme="dark"] .goal-step-section{border-top:1px solid #4a3d57}
+html[data-theme="dark"] .goal-step-section>strong{color:#e8def2}
+html[data-theme="dark"] .goal-step{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .goal-step-label{color:#e8def2}
+html[data-theme="dark"] .goal-step-label .is-complete{color:#e8def2}
+html[data-theme="dark"] .goal-linked{border-top:1px solid #4a3d57}
+html[data-theme="dark"] .goal-linked summary{color:#e8def2}
+html[data-theme="dark"] .goal-link{background:#312a3c;color:#e8def2}
+html[data-theme="dark"] .goal-link button{color:#c2b4d5}
+html[data-theme="dark"] .goal-actions{border-top:1px solid #4a3d57}
+html[data-theme="dark"] .review-stat>span{color:#e8def2}
+html[data-theme="dark"] .review-highlights p{color:#e8def2}
+html[data-theme="dark"] .review-highlights p span{color:#c0aedb}
+html[data-theme="dark"] .review-goal{border-bottom:1px solid #4a3d57}
+html[data-theme="dark"] .review-goal strong{color:#e8def2}
+html[data-theme="dark"] .review-goal span,html[data-theme="dark"] .review-goal small{color:#e8def2}
+html[data-theme="dark"] .review-pending-row{border:1px solid #4a3d57;background:#292332}
+html[data-theme="dark"] .review-pending-row strong{color:#e8def2}
+html[data-theme="dark"] .review-pending-row span{color:#e8def2}
+html[data-theme="dark"] .intelligence-info{background:#332a3c;color:#e8def2}
+html[data-theme="dark"] .intelligence-card{border:1px solid #4a3d57;background:#292332}
+html[data-theme="dark"] .intelligence-clock{background:#312a3c}
+html[data-theme="dark"] .intelligence-goal{color:#c1b1d8}
+html[data-theme="dark"] .intelligence-time{background:#312a3c;color:#c0b1d8}
+html[data-theme="dark"] .intelligence-accepted-row>span{color:#b2d7c8}
+html[data-theme="dark"] .intelligence-confirm-date{background:#322a3c;color:#c0b2d7}
+html[data-theme="dark"] .btn-primary{background:#8466c4;color:#fff}
+html[data-theme="dark"] .btn-primary:hover{background:#9679d3;color:#fff}
+html[data-theme="dark"] .btn-soft,html[data-theme="dark"] .btn-white{background:#403451;color:#f2e9fc}
+html[data-theme="dark"] .nav-link.active{background:#43345a;color:#f4eaff}
+html[data-theme="dark"] .nav-link:hover{background:#352a45;color:#f5eafd}
+html[data-theme="dark"] .hero-banner{background:linear-gradient(115deg,#4c365f 0%,#452f55 54%,#503047 100%)}
+html[data-theme="dark"] .hero-banner h1{color:#faf1ff}
+html[data-theme="dark"] .hero-banner p{color:#e4d5ec}
+html[data-theme="dark"] .hero-kicker{color:#f0cffa}
+html[data-theme="dark"] .hero-outline{color:#f9eefa;border-color:#9980b3;background:rgba(255,255,255,.07)}
+html[data-theme="dark"] .hero-outline:hover{background:rgba(255,255,255,.16)}
+html[data-theme="dark"] .wave{color:#f1c9ee}
+html[data-theme="dark"] .blob-main{background:radial-gradient(circle at 40% 30%,#bd9ce0 0 17%,#72518c 19% 50%,#5a3b74 74%,#6c4a87 90%);box-shadow:24px 20px 60px rgba(0,0,0,.24)}
+html[data-theme="dark"] .topbar{border-color:var(--stroke)}
+html[data-theme="dark"] :is(input,select,textarea){background:#30283d;color:#f2e9fb;border-color:#54445f}
+html[data-theme="dark"] :is(input,select,textarea)::placeholder{color:#a99bb9;opacity:1}
+html[data-theme="dark"] :is(input,select,textarea):disabled{background:#25202e;color:#9f91ab}
+html[data-theme="dark"] .modal{background:#292333;color:var(--ink);border-color:#57445f;box-shadow:0 24px 75px rgba(0,0,0,.55)}
+html[data-theme="dark"] .modal::backdrop{background:rgba(8,5,15,.75)}
+html[data-theme="dark"] .auth-card{background:#292333;border-color:#494053;box-shadow:0 24px 60px rgba(0,0,0,.24)}
+html[data-theme="dark"] .auth-decor{background:#473454;opacity:.55}
+html[data-theme="dark"] .decor-two{background:#4b3348}
+html[data-theme="dark"] .calendar-scroll,html[data-theme="dark"] .calendar-grid{border-color:#4b4057}
+html[data-theme="dark"] .calendar-day{background:#282232;border-color:#473a52}
+html[data-theme="dark"] .calendar-day.outside-month,html[data-theme="dark"] .calendar-grid .calendar-day.outside-month{background:#221c2c}
+html[data-theme="dark"] .calendar-grid .calendar-day.today{background:#332840}
+html[data-theme="dark"] .calendar-weekdays{background:#342a41;border-color:#4a3c57}
+html[data-theme="dark"] .calendar-day.drop-target{background:#4a3a61!important;box-shadow:inset 0 0 0 2px #c2a4ec}
+html[data-theme="dark"] .day-timeline-track{background:#292333}
+html[data-theme="dark"] .day-hour-drop:hover{background:rgba(182,150,229,.12)}
+html[data-theme="dark"] .cal-entry.cal-appointment,html[data-theme="dark"] .day-event{background:color-mix(in srgb,var(--event-accent,#af8adf) 18%,#282234);border-left-color:var(--event-accent,#af8adf);color:#f5eafa}
+html[data-theme="dark"] .day-time-card.day-event{background:color-mix(in srgb,var(--event-accent,#af8adf) 25%,#292333);color:#f5eafa}
+html[data-theme="dark"] .cal-entry.cal-task,html[data-theme="dark"] .day-banner-task{background:#393047;color:#e5d9f1}
+html[data-theme="dark"] .analytics-stat,html[data-theme="dark"] .goal-stat,html[data-theme="dark"] .review-stat,html[data-theme="dark"] .intelligence-stat{background:var(--surface);border-color:var(--stroke)}
+html[data-theme="dark"] .progress-track,html[data-theme="dark"] .analytics-category-track,html[data-theme="dark"] .focus-bar-track{background:#433650}
+html[data-theme="dark"] .focus-dial{background:conic-gradient(#b69ae6 var(--focus-percent,0%),#40334e var(--focus-percent,0%))}
+html[data-theme="dark"] .focus-dial-inner{background:#292333}
+html[data-theme="dark"] .analytics-heat-day{border-color:#4a3d54;background:#2a2534}
+html[data-theme="dark"] .analytics-heat-day.low{background:#443756}
+html[data-theme="dark"] .analytics-heat-day.mid{background:#765f99}
+html[data-theme="dark"] .analytics-heat-day.high{background:#a88ad9}
+html[data-theme="dark"] .analytics-heat-day.full{background:#d5b8ff}
+html[data-theme="dark"] .analytics-heat-day.off{background:#24202e}
+html[data-theme="dark"] .check{background:#2e283a;border-color:#9c85c0}
+html[data-theme="dark"] .check:checked{background:#8362c5;border-color:#a486dd}
+html[data-theme="dark"] .day-picker input:checked+span{background:#8061bb;color:white;border-color:#a688dc}
+html[data-theme="dark"] .toast{background:#4b375e;color:white}
+html[data-theme="dark"] .empty{background:#302739;border-color:#5a476c;color:#d0c1df}
+html[data-theme="dark"] .error-message{background:#4b303a;color:#ffb9c2}
+html[data-theme="dark"] .btn-danger,html[data-theme="dark"] .btn-danger-outline{background:#4d303c;color:#ffb8c1;border-color:#865563}
+html[data-theme="dark"] .goal-card,html[data-theme="dark"] .intelligence-card,html[data-theme="dark"] .routine-card,html[data-theme="dark"] .habit-card{background:#2d2538;border-color:#4d3f5a}
+html[data-theme="dark"] .review-pending-row,html[data-theme="dark"] .week-day{background:#2e2739;border-color:#4a3e56}
+html[data-theme="dark"] .cal-filter{color:#d9cae8}
+html[data-theme="dark"] .cal-filter.is-selected{background:#413351;color:#f5eafd}
+html[data-theme="dark"] .cal-filter .legend-dot{background:var(--event-accent,#b299da)}
+html[data-theme="dark"] .analytics-category-track>div{filter:saturate(.9) brightness(1.1)}
+html[data-theme="dark"] .day-banner-event{background:color-mix(in srgb,var(--event-accent) 22%,#282232);color:#f6ecfc}
+html[data-theme="dark"] .goal-link,html[data-theme="dark"] .habit-metric{background:#40314e;color:#e0cff4}
+html[data-theme="dark"] .theme-choice{border-color:#51455d;background:#342a41;color:#e3d8f1}
+html[data-theme="dark"] .theme-select{color:#f3eafc;background:transparent;border:0}
+html[data-theme="dark"] .theme-select:focus-visible{outline-color:#b49af2}
+html[data-theme="dark"] .auth-theme-choice{background:#30263d}
+html[data-theme="dark"] .theme-choice-icon{color:#d0afe9}
+html[data-theme="dark"] :is(button,a,input,textarea,select):focus-visible{outline-color:#d3b9fc}
+html[data-theme="dark"] ::selection{background:#65508a;color:#fff}
+html[data-theme="dark"]{scrollbar-color:#675476 #282232}
+.theme-choice{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid #e9e5f0;border-radius:12px;padding:0 10px;min-height:38px;white-space:nowrap}
+.theme-choice-text{font-size:11px;color:var(--muted);font-weight:700}
+.theme-choice-icon{color:var(--violet-dark);font-size:18px;line-height:1}
+.theme-select{background:transparent;border:none;padding:6px 18px 6px 3px;width:auto;min-width:103px;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer}
+.theme-select:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.topbar-tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+.auth-theme-choice{position:fixed;right:24px;top:21px;z-index:2}
+.theme-ready body,.theme-ready .sidebar,.theme-ready .panel,.theme-ready .stat-card,.theme-ready .modal,.theme-ready .btn,.theme-ready input,.theme-ready select,.theme-ready textarea,.theme-ready .nav-link{transition:background-color .22s ease,color .22s ease,border-color .22s ease,box-shadow .22s ease}
+@media(prefers-reduced-motion:reduce){.theme-ready body,.theme-ready .sidebar,.theme-ready .panel,.theme-ready .stat-card,.theme-ready .modal,.theme-ready .btn,.theme-ready input,.theme-ready select,.theme-ready textarea,.theme-ready .nav-link{transition:none}}
+@media(max-width:700px){.topbar-tools{gap:6px}.theme-choice{min-height:34px;padding:0 6px}.theme-choice-text{display:none}.theme-select{min-width:97px;padding:5px 16px 5px 0}.topbar-date{font-size:10px}.auth-theme-choice{right:13px;top:12px}}

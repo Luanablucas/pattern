@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme-preference="<%= themePreference %>">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
   <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco',goals:'Objetivos',review:'Retrospectiva',intelligence:'Inteligência'}[page] %> — Pattern</title>
+  <script src="<%= assetUrl('/static/js/theme.js') %>"></script>
   <link rel="stylesheet" href="<%= assetUrl('/static/css/style.css') %>" />
+  <link rel="stylesheet" href="<%= assetUrl('/static/css/theme.css') %>" />
   <script defer src="<%= assetUrl('/static/js/habit-utils.js') %>"></script>
   <script defer src="<%= assetUrl('/static/js/app.js') %>"></script>
   <% if (page === "insights") { %><script defer src="<%= assetUrl('/static/js/analytics.js') %>"></script><% } %>
@@ -41,7 +43,7 @@
     </aside>
 
     <main class="main-content">
-      <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco',goals:'Objetivos',review:'Retrospectiva',intelligence:'Inteligência'}[page] %></strong></div><div class="topbar-date" id="topbarDate"></div></header>
+      <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco',goals:'Objetivos',review:'Retrospectiva',intelligence:'Inteligência'}[page] %></strong></div><div class="topbar-tools"><label class="theme-choice"><span class="theme-choice-icon" aria-hidden="true">◐</span><span class="theme-choice-text">Tema</span><select class="theme-select" data-theme-select aria-label="Tema da aplicação"><option value="light">☀ Claro</option><option value="dark">☾ Escuro</option><option value="system">◉ Automático</option></select></label><div class="topbar-date" id="topbarDate"></div></div></header>
       <% if (page === 'app') { %>
         <section class="hero-banner">
           <div><span class="hero-kicker">✧ UM NOVO DIA, NO SEU RITMO</span><h1>Olá, <%= name.split(' ')[0] %> <span class="wave">✳</span></h1><p id="heroSubtitle">Vamos organizar o que importa hoje, sem pressa.</p><div class="hero-actions"><button class="btn btn-white" id="quickTask">+ Tarefa de hoje</button><a class="btn hero-outline" href="/calendar">Ver calendário →</a></div></div>

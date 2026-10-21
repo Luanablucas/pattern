@@ -245,3 +245,11 @@ CREATE TABLE IF NOT EXISTS planning_suggestions (
 );
 CREATE INDEX IF NOT EXISTS idx_planning_user_status ON planning_suggestions(user_id,status,starts_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_planning_active_task_date ON planning_suggestions(user_id,task_id,COALESCE(occurrence_date,DATE '0001-01-01')) WHERE status IN ('proposed','accepted');
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS theme_preference VARCHAR(8) NOT NULL DEFAULT 'system';
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_theme_preference_check' AND conrelid='users'::regclass) THEN
+    ALTER TABLE users ADD CONSTRAINT users_theme_preference_check CHECK (theme_preference IN ('light','dark','system'));
+  END IF;
+END $$;

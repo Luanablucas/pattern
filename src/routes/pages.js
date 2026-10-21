@@ -8,5 +8,5 @@ const controller=createController(db);
 app.get("/",controller.root);
 app.get("/login",controller.login);
 app.get("/register",controller.register);
-app.get("/:page",requirePageAuth,controller.page);
+app.get("/:page",requirePageAuth,asyncRoute(controller.page));
 };
