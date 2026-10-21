@@ -9,7 +9,7 @@ const cookieOptions={
   maxAge:7*24*60*60*1000
 };
 const authLimiter=rateLimit({windowMs:15*60*1000,limit:12,standardHeaders:"draft-7",legacyHeaders:false});
-const recoveryLimiter=rateLimit({windowMs:15*60*1000,limit:5,standardHeaders:"draft-7",legacyHeaders:false});
+const recoveryLimiter=()=>rateLimit({windowMs:15*60*1000,limit:5,standardHeaders:"draft-7",legacyHeaders:false});
 
 async function getUser(req,db){
   const cookie=req.cookies?.pattern_token;

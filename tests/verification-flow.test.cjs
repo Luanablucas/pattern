@@ -154,3 +154,12 @@ test("autorização exige verificação mesmo sem a flag de ambiente",async()=>{
     assert.equal(page.target,"/verify-pending");
   }finally{if(old===undefined)delete process.env.EMAIL_VERIFICATION_REQUIRED;else process.env.EMAIL_VERIFICATION_REQUIRED=old;}
 });
+
+test("falha ao reenviar confirmação retorna 503 e não uma mensagem de sucesso",async()=>{
+  const {ctrl,response,user}=controller({send:false});
+  const res=response();
+  await ctrl.resendVerification({user},res);
+  assert.equal(res.code,503);
+  assert.match(res.result.error,/Não foi possível enviar/);
+  assert.equal(res.result.ok,undefined);
+});

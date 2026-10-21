@@ -128,7 +128,8 @@ module.exports=function createAuthController(db){
   async function resendVerification(req,res){
     if(req.user.email_verified_at)return res.json({ok:true,message:"Seu e-mail já está confirmado."});
     const sent=await deliver(req.user.email,"verify_email",req.user.id);
-    res.json({ok:true,emailSent:sent,message:sent?"Enviamos um novo link de confirmação.":"O serviço de e-mail não está configurado ou não conseguiu enviar. Confira as configurações do servidor."});
+    if(!sent)return res.status(503).json({error:"Não foi possível enviar o e-mail de confirmação. Verifique o remetente e os registros do serviço de e-mail antes de tentar novamente."});
+    res.json({ok:true,emailSent:true,message:"Enviamos um novo link de confirmação."});
   }
   return{register,login,logout,requestReset,resetPassword,verifyEmail,verifyChangedEmail,resendVerification};
 };

@@ -2,7 +2,7 @@
 const form=document.querySelector("#authForm");
 const params=new URLSearchParams(window.location.search);
 const mode=form?.dataset.mode;
-const notify=(element,message)=>{element.textContent=message;element.hidden=false;};
+const notify=(element,message,isError=false)=>{element.textContent=message;element.hidden=false;element.classList?.toggle("account-feedback-error",isError);element.setAttribute?.("role",isError?"alert":"status");};
 async function request(path,body){
   let response;
   try{
@@ -32,7 +32,7 @@ if(form){
         notify(success,result.message||"Solicitação realizada.");
         if(mode==="reset"){button.hidden=true;form.elements.password.value="";}
       }
-    }catch(error){notify(document.querySelector("#formError"),error.message);}
+    }catch(error){notify(document.querySelector("#formError"),error.message,true);}
     finally{button.disabled=false;}
   });
 }
@@ -49,7 +49,7 @@ if(document.querySelector("#verifyStatus")){
       notify(status,"E-mail confirmado! Abrindo o Pattern...");
       button.hidden=true;
       window.location.replace(result.redirect||"/app");
-    }catch(error){notify(status,error.message);button.hidden=false;}
+    }catch(error){notify(status,error.message,true);button.hidden=false;}
   }
   button.addEventListener("click",verify);
   verify();
@@ -64,12 +64,12 @@ if(document.querySelector("#pendingStatus")){
     try{
       const result=await request("/api/auth/resend-verification",{});
       notify(status,result.message);
-    }catch(error){notify(status,error.message);}
+    }catch(error){notify(status,error.message,true);}
     finally{resend.disabled=false;}
   });
   logout.addEventListener("click",async()=>{
     logout.disabled=true;
     try{await request("/api/auth/logout",{});window.location.assign("/login");}
-    catch(error){notify(status,error.message);logout.disabled=false;}
+    catch(error){notify(status,error.message,true);logout.disabled=false;}
   });
 }

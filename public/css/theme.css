@@ -414,3 +414,6 @@ html[data-theme="dark"] .logout-confirm-mark{background:#3b304d;color:#e5d0ff}
 .auth-pending-actions{display:grid;gap:10px;margin-top:18px}
 .auth-pending-actions .btn{justify-content:center;text-align:center}
 html[data-theme="dark"] .auth-pending-email{background:#3a3147;color:#f4ecfa}
+
+.account-feedback.account-feedback-error{background:#fff0f0;color:#a9364c;border-color:#e9aeb6}
+html[data-theme="dark"] .account-feedback.account-feedback-error{background:#422831;color:#ffd4da;border-color:#87505a}
