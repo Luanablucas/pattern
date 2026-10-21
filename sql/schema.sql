@@ -180,3 +180,68 @@ CREATE TABLE IF NOT EXISTS event_overrides (
   CHECK (ends_at > starts_at)
 );
 CREATE INDEX IF NOT EXISTS idx_event_overrides_window ON event_overrides(starts_at, ends_at);
+
+
+CREATE TABLE IF NOT EXISTS goals (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(140) NOT NULL,
+  description VARCHAR(1200) NOT NULL DEFAULT '',
+  category VARCHAR(40) NOT NULL DEFAULT 'Pessoal',
+  priority VARCHAR(6) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low','medium','high')),
+  due_date DATE,
+  status VARCHAR(10) NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','completed','archived')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_goals_user_status ON goals(user_id,status);
+
+CREATE TABLE IF NOT EXISTS goal_steps (
+  id UUID PRIMARY KEY,
+  goal_id UUID NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+  title VARCHAR(160) NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0,
+  completed BOOLEAN NOT NULL DEFAULT FALSE,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_goal_steps_goal ON goal_steps(goal_id,position);
+
+CREATE TABLE IF NOT EXISTS goal_task_links (
+  goal_id UUID NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+  task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  PRIMARY KEY(goal_id,task_id)
+);
+CREATE TABLE IF NOT EXISTS goal_habit_links (
+  goal_id UUID NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+  habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+  PRIMARY KEY(goal_id,habit_id)
+);
+
+CREATE TABLE IF NOT EXISTS goal_step_events (
+  id UUID PRIMARY KEY,
+  step_id UUID NOT NULL REFERENCES goal_steps(id) ON DELETE CASCADE,
+  happened_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_goal_step_events_happened ON goal_step_events(happened_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_goal_step_events_unique ON goal_step_events(step_id,happened_at);
+
+CREATE TABLE IF NOT EXISTS planning_suggestions (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  occurrence_date DATE,
+  goal_id UUID REFERENCES goals(id) ON DELETE SET NULL,
+  starts_at TIMESTAMPTZ NOT NULL,
+  ends_at TIMESTAMPTZ NOT NULL,
+  minutes SMALLINT NOT NULL CHECK (minutes BETWEEN 25 AND 120),
+  reason TEXT NOT NULL,
+  status VARCHAR(12) NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed','accepted','dismissed')),
+  event_id UUID REFERENCES events(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (ends_at>starts_at)
+);
+CREATE INDEX IF NOT EXISTS idx_planning_user_status ON planning_suggestions(user_id,status,starts_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_planning_active_task_date ON planning_suggestions(user_id,task_id,COALESCE(occurrence_date,DATE '0001-01-01')) WHERE status IN ('proposed','accepted');

@@ -2,7 +2,7 @@
 const {getUser}=require("../middleware/auth");
 
 module.exports = function createPagesController(db) {
-const pages=["app","tasks","calendar","habits","insights","focus"];
+const pages=["app","tasks","calendar","habits","insights","focus","goals","review","intelligence"];
 const root = (req, res) => res.redirect(getUser(req) ? "/app" : "/login");
 const login = (req, res) => res.render("auth", { mode: "login" });
 const register = (req, res) => res.render("auth", { mode: "register" });

@@ -5,7 +5,7 @@ from typing import List
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="Pattern Insights", version="0.8.0")
+app = FastAPI(title="Pattern Insights", version="0.10.0")
 
 
 class DailyCount(BaseModel):
@@ -147,4 +147,32 @@ def analyze_dashboard(payload: DashboardAnalysisInput):
         'focusActiveDays': int(len(active)),
         'habitRate': consistency,
         'method': 'Análise descritiva com Pandas, sem previsão ou inferência causal. As sessões são atribuídas ao dia de término e os hábitos usam a programação atual.'
+    }
+
+
+class PlanningSession(BaseModel):
+    hour: int = Field(ge=0, le=23)
+    seconds: int = Field(ge=0, le=86400)
+
+
+class PlanningPatternsInput(BaseModel):
+    sessions: List[PlanningSession] = Field(max_length=1200)
+
+
+@app.post('/planning-patterns')
+def planning_patterns(payload: PlanningPatternsInput):
+    import pandas as pd
+
+    if not payload.sessions:
+        return {'sampleCount': 0, 'preferredHours': [], 'method': 'Histórico insuficiente.'}
+    frame = pd.DataFrame([row.model_dump() for row in payload.sessions])
+    frame = frame[(frame['hour'] >= 8) & (frame['hour'] <= 19) & (frame['seconds'] > 0)]
+    if len(frame) < 5:
+        return {'sampleCount': int(len(frame)), 'preferredHours': [], 'method': 'Menos de cinco sessões em horários de planejamento.'}
+    ranked = (frame.groupby('hour').size().reset_index(name='count')
+              .sort_values(['count', 'hour'], ascending=[False, True]))
+    return {
+        'sampleCount': int(len(frame)),
+        'preferredHours': [int(hour) for hour in ranked['hour'].head(3)],
+        'method': 'Frequência de horários de início de sessões de foco nos últimos 90 dias, com Pandas. Não é previsão de produtividade.'
     }

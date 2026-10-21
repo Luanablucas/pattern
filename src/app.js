@@ -28,7 +28,7 @@ function createApp(db) {
   require("./routes/pages")(app,db);
   require("./routes/auth")(app,db);
   app.use("/api",requireAuth);
-  for(const name of ["tasks","routines","habits","categories","events","insights","analytics","focus"]) {
+  for(const name of ["tasks","routines","habits","categories","events","insights","analytics","focus","goals","weekly-review","intelligence"]) {
     require(`./routes/${name}`)(app,db);
   }
   app.use("/api",(_req,res)=>res.status(404).json({error:"Rota não encontrada."}));

@@ -48,17 +48,17 @@ function withMocks(run) {
   }
 }
 
-test("as 45 rotas públicas e protegidas continuam registradas",()=>{
+test("as 59 rotas públicas e protegidas continuam registradas",()=>{
   withMocks(()=>{
     const {createApp}=require("../src/app");
     const db={query:async()=>({rows:[],rowCount:0})};
     const app=createApp(db);
     const expected={
-      get:["/","/login","/register","/:page","/api/tasks","/api/routines","/api/habits","/api/event-categories","/api/events","/api/insights","/api/analytics","/api/focus/active","/api/focus/history","/api/focus/calendar"],
-      post:["/api/auth/register","/api/auth/login","/api/auth/logout","/api/tasks","/api/routines","/api/habits","/api/habits/:id/check","/api/event-categories","/api/events","/api/events/conflicts","/api/focus/start","/api/focus/:id/pause","/api/focus/:id/resume","/api/focus/:id/finish"],
-      put:["/api/tasks/:id","/api/routines/:id","/api/habits/:id","/api/event-categories/:id","/api/events/:id"],
-      patch:["/api/recurring-tasks/:id/:date/toggle","/api/tasks/:id/date","/api/tasks/:id/toggle","/api/events/:id/occurrences/:date","/api/events/:id/future/:date"],
-      delete:["/api/recurring-tasks/:id/:date","/api/tasks/:id","/api/routines/:id","/api/habits/:id","/api/event-categories/:id","/api/events/:id/occurrences/:date","/api/events/:id"]
+      get:["/","/login","/register","/:page","/api/tasks","/api/routines","/api/habits","/api/event-categories","/api/events","/api/insights","/api/analytics","/api/focus/active","/api/focus/history","/api/focus/calendar","/api/goals","/api/goals/options","/api/weekly-review","/api/intelligence"],
+      post:["/api/auth/register","/api/auth/login","/api/auth/logout","/api/tasks","/api/routines","/api/habits","/api/habits/:id/check","/api/event-categories","/api/events","/api/events/conflicts","/api/focus/start","/api/focus/:id/pause","/api/focus/:id/resume","/api/focus/:id/finish","/api/goals","/api/goals/:id/steps","/api/goals/:id/links","/api/intelligence/generate","/api/intelligence/:id/accept","/api/intelligence/:id/dismiss"],
+      put:["/api/tasks/:id","/api/routines/:id","/api/habits/:id","/api/event-categories/:id","/api/events/:id","/api/goals/:id"],
+      patch:["/api/recurring-tasks/:id/:date/toggle","/api/tasks/:id/date","/api/tasks/:id/toggle","/api/events/:id/occurrences/:date","/api/events/:id/future/:date","/api/goals/:id/steps/:stepId"],
+      delete:["/api/recurring-tasks/:id/:date","/api/tasks/:id","/api/routines/:id","/api/habits/:id","/api/event-categories/:id","/api/events/:id/occurrences/:date","/api/events/:id","/api/goals/:id","/api/goals/:id/steps/:stepId","/api/goals/:id/links/:type/:entityId"]
     };
     const expectedKeys=Object.entries(expected).flatMap(([m,list])=>list.map(route=>`${m} ${route}`)).sort();
     const actual=app.routes.map(r=>`${r.method} ${r.path}`).sort();

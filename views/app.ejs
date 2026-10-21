@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f7f4fc" />
-  <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco'}[page] %> — Pattern</title>
-  <link rel="stylesheet" href="<%= assetUrl("/static/css/style.css") %>" />
-  <script defer src="<%= assetUrl("/static/js/habit-utils.js") %>"></script>
-  <script defer src="<%= assetUrl("/static/js/app.js") %>"></script>
-  <% if (page === "insights") { %><script defer src="<%= assetUrl("/static/js/analytics.js") %>"></script><% } %>
-  <% if (page === "focus") { %><script defer src="<%= assetUrl("/static/js/focus-core.js") %>"></script><script defer src="<%= assetUrl("/static/js/focus.js") %>"></script><% } %>
+  <title><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco',goals:'Objetivos',review:'Retrospectiva',intelligence:'Inteligência'}[page] %> — Pattern</title>
+  <link rel="stylesheet" href="<%= assetUrl('/static/css/style.css') %>" />
+  <script defer src="<%= assetUrl('/static/js/habit-utils.js') %>"></script>
+  <script defer src="<%= assetUrl('/static/js/app.js') %>"></script>
+  <% if (page === "insights") { %><script defer src="<%= assetUrl('/static/js/analytics.js') %>"></script><% } %>
+  <% if (page === "focus") { %><script defer src="<%= assetUrl('/static/js/focus-core.js') %>"></script><script defer src="<%= assetUrl('/static/js/focus.js') %>"></script><% } %>
+  <% if (page === "goals") { %><script defer src="<%= assetUrl('/static/js/goals.js') %>"></script><% } %>
+  <% if (page === "review") { %><script defer src="<%= assetUrl('/static/js/review.js') %>"></script><% } %>
+  <% if (page === "intelligence") { %><script defer src="<%= assetUrl('/static/js/intelligence.js') %>"></script><% } %>
 </head>
 <body data-page="<%= page %>">
   <div class="shell">
@@ -22,6 +25,9 @@
         <a href="/focus" class="nav-link <%= page === 'focus' ? 'active' : '' %>"><span class="nav-icon">◉</span> Foco</a>
         <a href="/calendar" class="nav-link <%= page === 'calendar' ? 'active' : '' %>"><span class="nav-icon">▦</span> Calendário</a>
         <a href="/habits" class="nav-link <%= page === 'habits' ? 'active' : '' %>"><span class="nav-icon">◷</span> Hábitos</a>
+        <a href="/goals" class="nav-link <%= page === 'goals' ? 'active' : '' %>"><span class="nav-icon">◎</span> Objetivos</a>
+        <a href="/intelligence" class="nav-link <%= page === 'intelligence' ? 'active' : '' %>"><span class="nav-icon">✧</span> Inteligência</a>
+        <a href="/review" class="nav-link <%= page === 'review' ? 'active' : '' %>"><span class="nav-icon">◫</span> Retrospectiva</a>
         <a href="/insights" class="nav-link <%= page === 'insights' ? 'active' : '' %>"><span class="nav-icon">◫</span> Insights</a>
       </nav>
       <div class="sidebar-bottom">
@@ -35,7 +41,7 @@
     </aside>
 
     <main class="main-content">
-      <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco'}[page] %></strong></div><div class="topbar-date" id="topbarDate"></div></header>
+      <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco',goals:'Objetivos',review:'Retrospectiva',intelligence:'Inteligência'}[page] %></strong></div><div class="topbar-date" id="topbarDate"></div></header>
       <% if (page === 'app') { %>
         <section class="hero-banner">
           <div><span class="hero-kicker">✧ UM NOVO DIA, NO SEU RITMO</span><h1>Olá, <%= name.split(' ')[0] %> <span class="wave">✳</span></h1><p id="heroSubtitle">Vamos organizar o que importa hoje, sem pressa.</p><div class="hero-actions"><button class="btn btn-white" id="quickTask">+ Tarefa de hoje</button><a class="btn hero-outline" href="/calendar">Ver calendário →</a></div></div>
@@ -113,6 +119,34 @@
         <section class="habit-overview" id="habitOverview" aria-label="Resumo dos hábitos"><p class="muted">Carregando seus hábitos...</p></section>
         <section class="panel routines-panel"><div class="panel-header"><div><p class="eyebrow">SEUS RITUAIS</p><h2>Minhas rotinas</h2><p class="muted small">Agrupe hábitos para organizar suas manhãs, noites e momentos livres.</p></div><button class="btn btn-soft" id="newRoutine" type="button">+ Criar rotina</button></div><div id="routineList" class="routine-list"></div></section>
         <section class="panel habits-panel"><div class="panel-header"><div><p class="eyebrow">CONSTÂNCIA, NÃO PERFEIÇÃO</p><h2>Acompanhamento semanal</h2><p class="muted small">Clique nos dias planejados para registrar suas realizações.</p></div></div><div id="habitList" class="habit-cards"><p class="muted">Carregando hábitos...</p></div></section>
+      <% } else if (page === 'goals') { %>
+        <section class="page-heading goals-heading">
+          <div><p class="eyebrow">UM OBJETIVO DE CADA VEZ</p><h1>Meus objetivos <span class="heading-sparkle">✳</span></h1><p class="muted">Transforme seus planos em etapas concretas.</p></div>
+          <button class="btn btn-primary" type="button" id="goalNew">+ Novo objetivo</button>
+        </section>
+        <section class="goal-overview" id="goalOverview" aria-label="Resumo dos objetivos"><p class="muted">Carregando...</p></section>
+        <section class="panel goals-main-panel">
+          <div class="panel-header goals-filter-header"><div><p class="eyebrow">SUA JORNADA</p><h2>Objetivos cadastrados</h2></div>
+            <div class="tabs" role="group" aria-label="Filtrar objetivos"><button class="tab active" data-goal-filter="active">Em andamento</button><button class="tab" data-goal-filter="paused">Pausados</button><button class="tab" data-goal-filter="completed">Concluídos</button><button class="tab" data-goal-filter="archived">Arquivados</button><button class="tab" data-goal-filter="all">Todos</button></div>
+          </div>
+          <div class="goal-grid" id="goalList"><p class="muted">Carregando seus objetivos...</p></div>
+        </section>
+      <% } else if (page === 'intelligence') { %>
+        <section class="page-heading intelligence-heading">
+          <div><p class="eyebrow">ESPAÇO PARA O QUE IMPORTA</p><h1>Pattern Intelligence <span class="heading-sparkle">✳</span></h1><p class="muted">Sugestões para sua próxima semana, com base no que você já registrou.</p></div>
+          <div class="intelligence-toolbar"><span class="muted small" id="intelligencePeriod"></span><button type="button" id="intelligenceGenerate" class="btn btn-primary">✧ Gerar sugestões</button></div>
+        </section>
+        <section class="intelligence-summary" id="intelligenceSummary"><p class="muted">Carregando...</p></section>
+        <p class="intelligence-info" id="intelligenceStatus">Analisando seu planejamento...</p>
+        <section class="panel intelligence-section"><div class="panel-header"><div><p class="eyebrow">SUAS POSSIBILIDADES</p><h2>Blocos de foco sugeridos</h2><p class="muted small">Os horários são sugestões. Nenhuma atividade será criada ou movida sem sua confirmação.</p></div></div><div class="intelligence-card-grid" id="intelligenceList"></div></section>
+        <section class="panel intelligence-section"><div class="panel-header"><div><p class="eyebrow">JÁ PLANEJADO</p><h2>Blocos adicionados</h2></div><a class="subtle-link" href="/calendar">Ver calendário →</a></div><div id="intelligenceAccepted"></div></section>
+        <dialog id="intelligenceConfirmDialog" class="modal"><div class="modal-title"><div><p class="eyebrow">CONFIRME ANTES DE AGENDAR</p><h2 id="intelligenceConfirmTitle">Reservar horário?</h2></div><button type="button" class="dialog-close" data-intelligence-close aria-label="Fechar">×</button></div><div class="form-stack"><p class="intelligence-confirm-date" id="intelligenceConfirmDate"></p><p class="muted small" id="intelligenceConfirmNote"></p><label>Bloco do calendário<select id="intelligenceCategory" required></select></label><p class="muted small">Confirmar criará um compromisso no calendário. A tarefa original não será concluída ou movida.</p><p class="error-message" id="intelligenceConfirmError" role="alert" hidden></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-intelligence-close>Cancelar</button><button type="button" class="btn btn-primary" id="intelligenceConfirmSubmit">Confirmar horário</button></div></div></dialog>
+      <% } else if (page === 'review') { %>
+        <section class="page-heading review-heading"><div><p class="eyebrow">ENTENDA SUA SEMANA</p><h1>Retrospectiva semanal <span class="heading-sparkle">✳</span></h1><p class="muted">Registros reais para planejar com mais clareza.</p></div></section>
+        <section class="panel review-topbar"><div><p class="eyebrow">SEU RESUMO</p><h2 id="reviewTitle">Carregando...</h2><p class="muted small" id="reviewStatus" role="status"></p></div><div class="review-nav"><button type="button" class="icon-button" id="reviewPrevious" aria-label="Semana anterior">←</button><button type="button" class="btn btn-soft" id="reviewCurrent">Esta semana</button><button type="button" class="icon-button" id="reviewNext" aria-label="Próxima semana">→</button></div></section>
+        <section class="review-overview" id="reviewOverview"><p class="muted">Carregando indicadores...</p></section>
+        <div class="review-columns"><section class="panel"><div class="panel-header"><div><p class="eyebrow">DADOS DA SEMANA</p><h2>O que seus registros mostram</h2></div></div><div id="reviewHighlights" class="review-highlights"></div><p id="reviewCaveat" class="muted small"></p></section><section class="panel"><div class="panel-header"><div><p class="eyebrow">EM EVOLUÇÃO</p><h2>Seus objetivos</h2></div><a class="subtle-link" href="/goals">Ver objetivos →</a></div><div id="reviewGoals" class="review-goals"></div></section></div>
+        <section class="panel review-plan-panel"><div class="panel-header"><div><p class="eyebrow">OLHE PARA FRENTE</p><h2>Planejar próxima semana</h2><p class="muted small" id="reviewNextLabel">Veja tarefas pendentes e decida o que reorganizar.</p></div><button type="button" class="btn btn-primary" id="reviewPlanToggle" aria-expanded="false">Ver tarefas pendentes</button></div><div id="reviewPlan" hidden><p class="muted small">Nenhuma tarefa será movida automaticamente. Abra o calendário ou edite a tarefa para escolher outra data.</p><div class="review-pending" id="reviewPending"></div><div class="review-plan-actions"><a class="btn btn-soft" href="/tasks">Organizar tarefas →</a><a class="btn btn-soft" href="/intelligence">Planejamento assistido ✧</a><a class="btn btn-primary" href="/calendar">Abrir calendário →</a></div></div></section>
       <% } else if (page === 'insights') { %>
         <section class="page-heading analytics-heading">
           <div><p class="eyebrow">DESCUBRA SEUS PADRÕES</p><h1>Pattern Analytics <span class="heading-sparkle">✳</span></h1><p class="muted">Seu planejamento, suas realizações e o tempo dedicado ao que importa.</p></div>
@@ -214,6 +248,15 @@
     <p class="error-message" id="confirmError" role="alert" hidden></p>
     <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="confirmDialog">Cancelar</button><button type="button" class="btn btn-danger" id="confirmDelete">Sim, excluir</button></div>
   </dialog>
+  <dialog id="goalDialog" class="modal goal-modal"><form id="goalForm" class="form-stack"><input type="hidden" name="id" />
+    <div class="modal-title"><div><p class="eyebrow">DÊ UM PASSO DE CADA VEZ</p><h2 id="goalDialogTitle">Novo objetivo</h2></div><button type="button" class="dialog-close" data-goal-close="goalDialog" aria-label="Fechar">×</button></div>
+    <label>Nome do objetivo<input name="title" maxlength="140" required placeholder="Ex.: Concluir minha formação em Python" /></label>
+    <label>Descrição (opcional)<textarea name="description" rows="3" maxlength="1200" placeholder="O que você deseja conquistar?"></textarea></label>
+    <div class="modal-fields"><label>Categoria<input name="category" maxlength="40" value="Pessoal" required placeholder="Ex.: Estudos" /></label><label>Data limite (opcional)<input type="date" name="dueDate" /></label></div>
+    <div class="modal-fields"><label>Prioridade<select name="priority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label><label>Situação<select name="status"><option value="active">Em andamento</option><option value="paused">Pausado</option><option value="completed">Concluído</option><option value="archived">Arquivado</option></select></label></div>
+    <p class="error-message" id="goalError" role="alert" hidden></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-goal-close="goalDialog">Cancelar</button><button class="btn btn-primary" type="submit">Salvar objetivo</button></div>
+  </form></dialog>
+  <dialog id="goalConfirm" class="modal confirmation-modal" aria-labelledby="goalConfirmTitle"><div class="confirm-mark" aria-hidden="true">!</div><h2 id="goalConfirmTitle">Excluir objetivo?</h2><p class="muted" id="goalConfirmText"></p><p class="error-message" id="goalConfirmError" hidden role="alert"></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-goal-close="goalConfirm">Cancelar</button><button type="button" class="btn btn-danger" id="goalConfirmSubmit">Sim, excluir</button></div></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
