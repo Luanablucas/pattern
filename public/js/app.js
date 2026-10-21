@@ -914,8 +914,24 @@ document.addEventListener("click", async (e) => {
     if(target.dataset.categoryDelete) {const c=state.categories.find(c=>c.id===target.dataset.categoryDelete);if(c)askDelete({kind:'category',id:c.id,title:c.name});return;}
     if(target.id==='confirmDelete'){await performDeletion();return;}
     if (target.id === "logoutBtn") {
-      await api("/api/auth/logout", { method: "POST", body: {} });
-      window.location.assign("/login");
+      $("#logoutError").hidden = true;
+      $("#logoutConfirmDialog").showModal();
+      return;
+    }
+    if (target.id === "logoutConfirm") {
+      const error = $("#logoutError");
+      error.hidden = true;
+      target.disabled = true;
+      try {
+        await api("/api/auth/logout", { method: "POST", body: {} });
+        window.location.assign("/login");
+      } catch (err) {
+        error.textContent = err.message || "Não foi possível sair da conta.";
+        error.hidden = false;
+      } finally {
+        target.disabled = false;
+      }
+      return;
     }
   } catch (err) {
     showError(err);

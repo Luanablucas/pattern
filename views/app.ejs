@@ -275,6 +275,13 @@
     <div class="modal-fields"><label>Prioridade<select name="priority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label><label>Situação<select name="status"><option value="active">Em andamento</option><option value="paused">Pausado</option><option value="completed">Concluído</option><option value="archived">Arquivado</option></select></label></div>
     <p class="error-message" id="goalError" role="alert" hidden></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-goal-close="goalDialog">Cancelar</button><button class="btn btn-primary" type="submit">Salvar objetivo</button></div>
   </form></dialog>
+  <dialog id="logoutConfirmDialog" class="modal confirmation-modal" aria-labelledby="logoutConfirmTitle" aria-describedby="logoutConfirmMessage">
+    <div class="confirm-mark logout-confirm-mark" aria-hidden="true">↗</div>
+    <h2 id="logoutConfirmTitle">Sair do Pattern?</h2>
+    <p id="logoutConfirmMessage" class="muted">Deseja mesmo sair da sua conta? Você poderá entrar novamente quando quiser.</p>
+    <p class="error-message" id="logoutError" role="alert" hidden></p>
+    <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="logoutConfirmDialog">Continuar conectada</button><button type="button" class="btn btn-primary" id="logoutConfirm">Sim, sair</button></div>
+  </dialog>
   <dialog id="goalConfirm" class="modal confirmation-modal" aria-labelledby="goalConfirmTitle"><div class="confirm-mark" aria-hidden="true">!</div><h2 id="goalConfirmTitle">Excluir objetivo?</h2><p class="muted" id="goalConfirmText"></p><p class="error-message" id="goalConfirmError" hidden role="alert"></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-goal-close="goalConfirm">Cancelar</button><button type="button" class="btn btn-danger" id="goalConfirmSubmit">Sim, excluir</button></div></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

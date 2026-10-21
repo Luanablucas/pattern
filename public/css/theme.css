@@ -406,3 +406,6 @@ html[data-theme="dark"] .account-error{color:#f1aebb!important}
 html[data-theme="dark"] .profile-link:hover,html[data-theme="dark"] .profile-link:focus-visible,html[data-theme="dark"] .profile-selected .profile-link{background:#403250;color:#f1e9ff}
 html[data-theme="dark"] .profile-link:hover .profile-name span,html[data-theme="dark"] .profile-selected .profile-link .profile-name span{color:#d6c2f0}
 @media(max-width:700px){.sidebar-bottom{margin-top:12px}.sidebar-bottom .profile{display:flex;padding:10px 4px 0}.sidebar-bottom .profile .profile-link{padding:6px}.sidebar-bottom .profile .avatar{width:34px;height:34px;flex-basis:34px}}
+
+.logout-confirm-mark{background:#eee8fb;color:#7a59b9}
+html[data-theme="dark"] .logout-confirm-mark{background:#3b304d;color:#e5d0ff}

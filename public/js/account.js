@@ -1,4 +1,5 @@
 "use strict";
+(() => {
 const $=id=>document.getElementById(id);
 const notice=(message,isError=false)=>{
   const el=$("accountStatus");el.textContent=message;el.classList.toggle("account-error",isError);
@@ -60,3 +61,5 @@ $("revokeOtherSessions").addEventListener("click",async()=>{
   catch(error){notice(error.message,true);}
 });
 Promise.all([loadProfile(),loadSessions()]).then(()=>notice("Sua conta está atualizada.")).catch(error=>notice(error.message,true));
+
+})();
