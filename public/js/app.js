@@ -234,7 +234,13 @@ function renderDashboard() {
   });
   $("#weekStrip").innerHTML = days.join("");
 }
+function syncTaskFilterAccessibility() {
+  document.querySelectorAll("[data-filter]").forEach(button => {
+    button.setAttribute("aria-pressed", String(button.dataset.filter === state.filter));
+  });
+}
 function renderTasks() {
+  syncTaskFilterAccessibility();
   const filtered = state.tasks.filter(
     (x) =>
       state.filter === "all" ||
@@ -877,17 +883,8 @@ document.addEventListener("click", async (e) => {
       return;
     }
     if (target.dataset.routineDelete) {
-      if (
-        window.confirm(
-          "Excluir esta rotina? Os hábitos associados serão mantidos, sem rotina.",
-        )
-      ) {
-        await api(`/api/routines/${target.dataset.routineDelete}`, {
-          method: "DELETE",
-        });
-        await refreshHabits();
-        toast("Rotina excluída; hábitos preservados.");
-      }
+      const routine = state.routines.find(item => item.id === target.dataset.routineDelete);
+      if (routine) askDelete({kind: 'routine', id: routine.id, title: routine.name});
       return;
     }
     if (target.dataset.habitDelete) {
@@ -1203,8 +1200,8 @@ let requestedDeletion=null;
 function askDelete(item){
  if(!item.id)return;
  requestedDeletion=item;
- $('#confirmTitle').textContent=item.kind==='habit'?'Excluir hábito?':item.kind==='event'?'Excluir compromisso?':item.kind==='category'?'Excluir bloco?':'Excluir tarefa?';
- $('#confirmMessage').textContent=item.kind==='habit'?`Deseja excluir “${item.title}”? Todo o histórico deste hábito será apagado.`:item.kind==='category'?`O bloco “${item.title}” será excluído somente se não tiver compromissos associados.`:`Deseja excluir “${item.title}”? Essa ação não poderá ser desfeita.`;
+ $('#confirmTitle').textContent=item.kind==='habit'?'Excluir hábito?':item.kind==='event'?'Excluir compromisso?':item.kind==='category'?'Excluir bloco?':item.kind==='routine'?'Excluir rotina?':'Excluir tarefa?';
+ $('#confirmMessage').textContent=item.kind==='habit'?`Deseja excluir “${item.title}”? Todo o histórico deste hábito será apagado.`:item.kind==='category'?`O bloco “${item.title}” será excluído somente se não tiver compromissos associados.`:item.kind==='routine'?`Deseja excluir a rotina “${item.title}”? Os hábitos associados serão preservados.`:`Deseja excluir “${item.title}”? Essa ação não poderá ser desfeita.`;
  $('#deleteScope').hidden=!item.recurring;
  $('#deleteScope').querySelector('input[value="one"]').checked=true;
  $('#confirmError').hidden=true;
@@ -1217,6 +1214,7 @@ async function performDeletion(){
  let url;
  if(item.kind==='habit')url=`/api/habits/${item.id}`;
  else if(item.kind==='category')url=`/api/event-categories/${item.id}`;
+ else if(item.kind==='routine')url=`/api/routines/${item.id}`;
  else if(item.kind==='task')url=scope==='one'?`/api/recurring-tasks/${item.id}/${item.instance}`:`/api/tasks/${item.id}`;
  else url=scope==='one'?`/api/events/${item.id}/occurrences/${item.instance}`:`/api/events/${item.id}`;
  const err=$('#confirmError');err.hidden=true;
@@ -1225,6 +1223,7 @@ async function performDeletion(){
    $('#confirmDialog').close();requestedDeletion=null;
    if(item.kind==='habit'){await refreshHabits();toast('Hábito excluído.');}
    else if(item.kind==='category'){await refreshCategories();await loadCalendarEvents();toast('Bloco excluído.');}
+   else if(item.kind==='routine'){await refreshHabits();toast('Rotina excluída; hábitos preservados.');}
    else if(item.kind==='task'){await refreshTasks();toast('Tarefa excluída.');}
    else {$('#eventDialog').close();await loadCalendarEvents();toast('Compromisso excluído.');}
  }catch(e){err.textContent=e.message;err.hidden=false;}

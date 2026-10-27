@@ -417,3 +417,6 @@ html[data-theme="dark"] .auth-pending-email{background:#3a3147;color:#f4ecfa}
 
 .account-feedback.account-feedback-error{background:#fff0f0;color:#a9364c;border-color:#e9aeb6}
 html[data-theme="dark"] .account-feedback.account-feedback-error{background:#422831;color:#ffd4da;border-color:#87505a}
+
+html[data-theme="dark"] :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #e5ceff;outline-offset:3px}
+html[data-theme="dark"] .calendar-scroll:focus-visible{outline-color:#e5ceff}

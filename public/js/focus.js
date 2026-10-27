@@ -69,7 +69,11 @@
     ["focusStart", "focusPause", "focusResume", "focusFinish"].forEach(id => element(id).disabled = state.busy);
     element("focusStatus").textContent = !active ? "Pronta para começar" : session.status === "running" ? "Sessão em andamento" : "Sessão pausada";
     element("focusCurrentTask").textContent = active ? (session.taskTitle || "Sessão de foco livre") : "Escolha uma tarefa ou comece livremente.";
-    document.querySelectorAll("[data-focus-minutes]").forEach(button => button.classList.toggle("is-active", Number(button.dataset.focusMinutes) === Number(element("focusDuration").value)));
+    document.querySelectorAll("[data-focus-minutes]").forEach(button => {
+      const selected = Number(button.dataset.focusMinutes) === Number(element("focusDuration").value);
+      button.classList.toggle("is-active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
   };
   const call = async (operation, body = undefined) => {
     clearError();

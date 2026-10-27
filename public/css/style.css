@@ -2,7 +2,7 @@
   --bg: #f8f7fc;
   --surface: #ffffff;
   --ink: #302c42;
-  --muted: #8d899b;
+  --muted: #6b6478;
   --stroke: #efedf5;
   --violet: #8165c9;
   --violet-dark: #6748b3;
@@ -2559,3 +2559,31 @@ textarea {
 .intelligence-confirm-date{background:#f4eefb;border-radius:12px;padding:12px 15px;color:#6c519a;font-weight:700}
 @media(max-width:1000px){.intelligence-card-grid{grid-template-columns:1fr}}
 @media(max-width:700px){.intelligence-summary{gap:7px}.intelligence-stat{padding:13px}.intelligence-stat strong{font-size:21px}.intelligence-stat span{font-size:10px}.intelligence-heading .intelligence-toolbar{width:100%}.intelligence-heading .btn{white-space:normal}.intelligence-card{padding:16px}.intelligence-actions .btn{flex:1}.intelligence-accepted-row{flex-wrap:wrap}}
+
+.skip-link{position:fixed;top:12px;left:12px;z-index:300;background:var(--surface);color:var(--ink);padding:12px 17px;border:2px solid var(--violet);border-radius:12px;transform:translateY(-160%);font-weight:700;box-shadow:var(--shadow)}
+.skip-link:focus{transform:translateY(0)}
+#main-content:focus{outline:none}
+.nav-link{min-height:44px}
+.nav-link[aria-current="page"]{font-weight:800}
+:is(.mini-button,.icon-button,.dialog-close){min-width:40px;min-height:40px}
+:where(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #5b398d;outline-offset:3px}
+.nav-list{scrollbar-width:thin;scrollbar-color:var(--violet) transparent}
+.nav-list .nav-link{scroll-margin-inline:14px}
+:where(.modal,.auth-card) :is(input,select,textarea):user-invalid{border-color:#ac344c}
+@media(max-width:700px){
+  .sidebar{padding-bottom:10px}
+  .nav-list{padding:4px 0 8px;scroll-padding-inline:12px;overscroll-behavior-inline:contain}
+  .nav-link{min-height:44px;font-size:12px}
+  .sidebar-bottom .profile{display:flex;min-width:0}
+  .sidebar-bottom .profile-link{min-width:0}
+  .sidebar-bottom .logout{min-width:44px;min-height:44px}
+  .topbar{height:auto;min-height:52px;padding:8px 0;gap:8px;flex-wrap:wrap}
+  .topbar-tools{min-width:0;justify-content:flex-start}
+  .modal{max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
+  .modal-actions{flex-wrap:wrap}
+  .modal-actions .btn{min-height:44px}
+  .calendar-scroll{scrollbar-width:thin;scrollbar-color:var(--violet) transparent}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:0.01ms!important}
+}

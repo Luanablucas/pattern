@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="<%= assetUrl('/static/css/theme.css') %>" />
   <script defer src="<%= assetUrl('/static/js/habit-utils.js') %>"></script>
   <script defer src="<%= assetUrl('/static/js/app.js') %>"></script>
+  <script defer src="<%= assetUrl('/static/js/accessibility.js') %>"></script>
   <% if (page === "insights") { %><script defer src="<%= assetUrl('/static/js/analytics.js') %>"></script><% } %>
   <% if (page === "focus") { %><script defer src="<%= assetUrl('/static/js/focus-core.js') %>"></script><script defer src="<%= assetUrl('/static/js/focus.js') %>"></script><% } %>
   <% if (page === "goals") { %><script defer src="<%= assetUrl('/static/js/goals.js') %>"></script><% } %>
@@ -19,20 +20,21 @@
   <% if (page === "settings") { %><script defer src="<%= assetUrl('/static/js/account.js') %>"></script><% } %>
 </head>
 <body data-page="<%= page %>">
+  <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
   <div class="shell">
     <aside class="sidebar" aria-label="Menu principal">
       <a href="/app" class="logo"><span class="logo-mark">✳</span> pattern<span class="logo-dot">.</span></a>
       <div class="side-section-label">MENU</div>
       <nav class="nav-list">
-        <a href="/app" class="nav-link <%= page === 'app' ? 'active' : '' %>"><span class="nav-icon">⌂</span> Hoje</a>
-        <a href="/tasks" class="nav-link <%= page === 'tasks' ? 'active' : '' %>"><span class="nav-icon">☑</span> Tarefas</a>
-        <a href="/focus" class="nav-link <%= page === 'focus' ? 'active' : '' %>"><span class="nav-icon">◉</span> Foco</a>
-        <a href="/calendar" class="nav-link <%= page === 'calendar' ? 'active' : '' %>"><span class="nav-icon">▦</span> Calendário</a>
-        <a href="/habits" class="nav-link <%= page === 'habits' ? 'active' : '' %>"><span class="nav-icon">◷</span> Hábitos</a>
-        <a href="/goals" class="nav-link <%= page === 'goals' ? 'active' : '' %>"><span class="nav-icon">◎</span> Objetivos</a>
-        <a href="/intelligence" class="nav-link <%= page === 'intelligence' ? 'active' : '' %>"><span class="nav-icon">✧</span> Inteligência</a>
-        <a href="/review" class="nav-link <%= page === 'review' ? 'active' : '' %>"><span class="nav-icon">◫</span> Retrospectiva</a>
-        <a href="/insights" class="nav-link <%= page === 'insights' ? 'active' : '' %>"><span class="nav-icon">◫</span> Insights</a>
+        <a href="/app" class="nav-link <%= page === 'app' ? 'active' : '' %>" <%= page === 'app' ? 'aria-current="page"' : '' %>><span class="nav-icon">⌂</span> Hoje</a>
+        <a href="/tasks" class="nav-link <%= page === 'tasks' ? 'active' : '' %>" <%= page === 'tasks' ? 'aria-current="page"' : '' %>><span class="nav-icon">☑</span> Tarefas</a>
+        <a href="/focus" class="nav-link <%= page === 'focus' ? 'active' : '' %>" <%= page === 'focus' ? 'aria-current="page"' : '' %>><span class="nav-icon">◉</span> Foco</a>
+        <a href="/calendar" class="nav-link <%= page === 'calendar' ? 'active' : '' %>" <%= page === 'calendar' ? 'aria-current="page"' : '' %>><span class="nav-icon">▦</span> Calendário</a>
+        <a href="/habits" class="nav-link <%= page === 'habits' ? 'active' : '' %>" <%= page === 'habits' ? 'aria-current="page"' : '' %>><span class="nav-icon">◷</span> Hábitos</a>
+        <a href="/goals" class="nav-link <%= page === 'goals' ? 'active' : '' %>" <%= page === 'goals' ? 'aria-current="page"' : '' %>><span class="nav-icon">◎</span> Objetivos</a>
+        <a href="/intelligence" class="nav-link <%= page === 'intelligence' ? 'active' : '' %>" <%= page === 'intelligence' ? 'aria-current="page"' : '' %>><span class="nav-icon">✧</span> Inteligência</a>
+        <a href="/review" class="nav-link <%= page === 'review' ? 'active' : '' %>" <%= page === 'review' ? 'aria-current="page"' : '' %>><span class="nav-icon">◫</span> Retrospectiva</a>
+        <a href="/insights" class="nav-link <%= page === 'insights' ? 'active' : '' %>" <%= page === 'insights' ? 'aria-current="page"' : '' %>><span class="nav-icon">◫</span> Insights</a>
       </nav>
       <div class="sidebar-bottom">
         <div class="gentle-note"><span>✦</span><p>Pequenos passos também são progresso.</p></div>
@@ -46,7 +48,7 @@
       </div>
     </aside>
 
-    <main class="main-content">
+    <main id="main-content" class="main-content" tabindex="-1">
       <header class="topbar"><div class="breadcrumb">Meu espaço <span>/</span> <strong><%= {app:'Hoje',tasks:'Tarefas',calendar:'Calendário',habits:'Hábitos',insights:'Insights',focus:'Foco',goals:'Objetivos',review:'Retrospectiva',intelligence:'Inteligência',settings:'Minha conta'}[page] %></strong></div><div class="topbar-tools"><label class="theme-choice"><span class="theme-choice-icon" aria-hidden="true">◐</span><span class="theme-choice-text">Tema</span><select class="theme-select" data-theme-select aria-label="Tema da aplicação"><option value="light">☀ Claro</option><option value="dark">☾ Escuro</option><option value="system">◉ Automático</option></select></label><div class="topbar-date" id="topbarDate"></div></div></header>
       <% if (page === 'app') { %>
         <section class="hero-banner">
@@ -71,13 +73,13 @@
         <section class="quote-bar"><span>✦</span> Você não precisa fazer tudo hoje. Só precisa decidir o que é importante.</section>
       <% } else if (page === 'tasks') { %>
         <section class="page-heading"><div><p class="eyebrow">UMA COISA DE CADA VEZ</p><h1>Minhas tarefas <span class="heading-sparkle">✳</span></h1><p class="muted">Um lugar para tudo o que você quer realizar.</p></div><button class="btn btn-primary" id="newTask">+ Nova tarefa</button></section>
-        <section class="panel"><div class="filter-row"><div class="tabs" role="group" aria-label="Filtrar tarefas"><button class="tab active" data-filter="all">Todas</button><button class="tab" data-filter="pending">Pendentes</button><button class="tab" data-filter="done">Concluídas</button></div><span class="filter-count" id="tasksCount"></span></div><div class="items-list" id="taskList"><p class="muted">Carregando tarefas...</p></div></section>
+        <section class="panel"><div class="filter-row"><div class="tabs" role="group" aria-label="Filtrar tarefas"><button class="tab active" data-filter="all" aria-pressed="true">Todas</button><button class="tab" data-filter="pending" aria-pressed="false">Pendentes</button><button class="tab" data-filter="done" aria-pressed="false">Concluídas</button></div><span class="filter-count" id="tasksCount"></span></div><div class="items-list" id="taskList"><p class="muted">Carregando tarefas...</p></div></section>
       <% } else if (page === 'focus') { %>
         <section class="page-heading focus-heading"><div><p class="eyebrow">UM MOMENTO PARA O QUE IMPORTA</p><h1>Modo Foco <span class="heading-sparkle">✳</span></h1><p class="muted">Escolha uma tarefa, encontre seu ritmo e acompanhe o tempo dedicado.</p></div></section>
         <div class="focus-layout">
           <section class="panel focus-session-panel" aria-label="Cronômetro de foco">
             <div class="focus-modes" role="group" aria-label="Modo da sessão"><button class="focus-mode is-active" type="button" data-focus-mode="pomodoro" aria-pressed="true">◷ Pomodoro</button><button class="focus-mode" type="button" data-focus-mode="free" aria-pressed="false">⏱ Cronômetro livre</button></div>
-            <div class="focus-setup"><label>Vincular a uma tarefa (opcional)<select id="focusTask"><option value="">Sem tarefa vinculada</option></select></label><div id="focusDurationWrap"><label for="focusDuration">Duração do foco (minutos)</label><div class="focus-duration-line"><input type="number" id="focusDuration" value="25" min="5" max="180" step="1" /><div class="focus-presets" role="group" aria-label="Tempos sugeridos"><button type="button" data-focus-minutes="15">15</button><button type="button" class="is-active" data-focus-minutes="25">25</button><button type="button" data-focus-minutes="50">50</button></div></div></div></div>
+            <div class="focus-setup"><label>Vincular a uma tarefa (opcional)<select id="focusTask"><option value="">Sem tarefa vinculada</option></select></label><div id="focusDurationWrap"><label for="focusDuration">Duração do foco (minutos)</label><div class="focus-duration-line"><input type="number" id="focusDuration" value="25" min="5" max="180" step="1" /><div class="focus-presets" role="group" aria-label="Tempos sugeridos"><button type="button" data-focus-minutes="15" aria-pressed="false">15</button><button type="button" class="is-active" data-focus-minutes="25" aria-pressed="true">25</button><button type="button" data-focus-minutes="50" aria-pressed="false">50</button></div></div></div></div>
             <div class="focus-dial-area"><div class="focus-dial" id="focusDial"><div class="focus-dial-inner"><span class="focus-dial-caption" id="focusTimerLabel">TEMPO PARA FOCAR</span><strong class="focus-time" id="focusTimer" aria-live="off">25:00</strong><span class="focus-dial-status" id="focusStatus">Pronta para começar</span></div></div></div>
             <p class="focus-current-task" id="focusCurrentTask">Escolha uma tarefa ou comece livremente.</p>
             <p class="focus-error error-message" id="focusError" role="alert" hidden></p>
@@ -108,8 +110,8 @@
             </div>
           </div>
           <div class="calendar-categories-row"><div class="calendar-legend" id="calendarLegend" aria-label="Blocos de compromissos"></div><button type="button" class="btn btn-soft" id="manageCategories">✎ Meus blocos</button></div>
-          <p class="calendar-help">Veja seus planos por mês, semana ou dia. Arraste compromissos para mudar o dia ou horário; no celular, toque para editar. Sobreposições são sinalizadas antes de salvar.</p>
-          <div class="calendar-scroll" tabindex="0" aria-label="Grade do calendário com rolagem horizontal em telas pequenas">
+          <p class="calendar-help">Veja seus planos por mês, semana ou dia. Arraste compromissos para mudar o dia ou horário. Com teclado ou no celular, selecione um compromisso para editar a data e o horário. Sobreposições são sinalizadas antes de salvar.</p>
+          <div class="calendar-scroll" tabindex="0" aria-label="Calendário. Use Tab para acessar dias, tarefas e compromissos, ou role horizontalmente para ver outros dias">
             <div class="calendar-weekdays" id="calendarWeekdays" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
             <div id="calendarGrid" class="calendar-grid calendar-month" aria-live="polite"><p class="muted">Carregando agenda...</p></div><div id="calendarDayView" class="day-view" hidden></div>
           </div>
@@ -197,13 +199,13 @@
     </main>
   </div>
 
-  <dialog id="taskDialog" class="modal"><form id="taskForm" class="form-stack"><input type="hidden" name="id" /><div class="modal-title"><div><p class="eyebrow">PLANEJE COM CALMA</p><h2 id="taskDialogTitle">Nova tarefa</h2></div><button type="button" class="dialog-close" data-close="taskDialog" aria-label="Fechar">×</button></div><label>Nome da tarefa<input name="title" required maxlength="160" placeholder="Ex.: Revisar projeto Pattern" /></label><label>Detalhes (opcional)<textarea name="notes" rows="3" maxlength="2000" placeholder="Alguma observação importante?"></textarea></label><div class="modal-fields"><label>Data limite<input type="date" name="dueDate" /></label><label>Prioridade<select name="priority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label></div>
+  <dialog id="taskDialog" aria-labelledby="taskDialogTitle" class="modal"><form id="taskForm" class="form-stack"><input type="hidden" name="id" /><div class="modal-title"><div><p class="eyebrow">PLANEJE COM CALMA</p><h2 id="taskDialogTitle">Nova tarefa</h2></div><button type="button" class="dialog-close" data-close="taskDialog" aria-label="Fechar">×</button></div><label>Nome da tarefa<input name="title" required maxlength="160" placeholder="Ex.: Revisar projeto Pattern" /></label><label>Detalhes (opcional)<textarea name="notes" rows="3" maxlength="2000" placeholder="Alguma observação importante?"></textarea></label><div class="modal-fields"><label>Data limite<input type="date" name="dueDate" /></label><label>Prioridade<select name="priority"><option value="low">Baixa</option><option value="medium" selected>Média</option><option value="high">Alta</option></select></label></div>
     <label>Repetir tarefa<select name="repeat" class="repeat-select"><option value="none">Não repetir</option><option value="daily">Todos os dias</option><option value="weekly">Dias específicos da semana</option><option value="monthly">Todo mês</option></select></label>
     <fieldset class="repeat-weekdays" data-repeat-days="task" hidden><legend>Escolha os dias da semana</legend><div class="repeat-days"></div></fieldset>
     <label data-repeat-until="task" hidden>Repetir até (opcional)<input type="date" name="repeatUntil" /></label>
     <p class="muted small repeat-info" data-repeat-message="task" hidden>As alterações de uma tarefa recorrente afetam a série. As realizações de cada dia são registradas separadamente.</p>
     <p class="error-message" id="taskError" role="alert" hidden></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-close="taskDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar tarefa</button></div></form></dialog>
-  <dialog id="eventDialog" class="modal"><form id="eventForm" class="form-stack">
+  <dialog id="eventDialog" aria-labelledby="eventDialogTitle" class="modal"><form id="eventForm" class="form-stack">
     <input type="hidden" name="id" />
     <div class="modal-title"><div><p class="eyebrow">RESERVE UM TEMPO</p><h2 id="eventDialogTitle">Novo compromisso</h2></div><button type="button" class="dialog-close" data-close="eventDialog" aria-label="Fechar">×</button></div>
     <label>Compromisso<input name="title" required maxlength="160" placeholder="Ex.: Consulta, aula, reunião" /></label>
@@ -222,7 +224,7 @@
     <p class="calendar-event-warning" id="eventConflictNotice" hidden></p><p class="error-message" id="eventError" role="alert" hidden></p>
     <div class="modal-actions event-modal-actions"><button type="button" class="btn btn-danger-outline" id="deleteEvent" hidden>Excluir</button><span class="modal-action-spacer"></span><button type="button" class="btn btn-soft" data-close="eventDialog">Cancelar</button><button type="submit" class="btn btn-primary" id="saveEvent">Salvar compromisso</button></div>
   </form></dialog>
-  <dialog id="habitDialog" class="modal habit-modal"><form id="habitEditForm" class="form-stack">
+  <dialog id="habitDialog" aria-labelledby="habitDialogTitle" class="modal habit-modal"><form id="habitEditForm" class="form-stack">
     <input type="hidden" name="id" />
     <div class="modal-title"><div><p class="eyebrow">NO SEU RITMO</p><h2 id="habitDialogTitle">Novo hábito</h2></div><button type="button" class="dialog-close" data-close="habitDialog" aria-label="Fechar">×</button></div>
     <label>Nome do hábito<input name="name" required maxlength="100" placeholder="Ex.: Ler 20 minutos" /></label>
@@ -241,7 +243,7 @@
     <p class="error-message" id="habitError" role="alert" hidden></p>
     <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="habitDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar hábito</button></div>
   </form></dialog>
-  <dialog id="routineDialog" class="modal"><form id="routineForm" class="form-stack">
+  <dialog id="routineDialog" aria-labelledby="routineDialogTitle" class="modal"><form id="routineForm" class="form-stack">
     <input type="hidden" name="id" />
     <div class="modal-title"><div><p class="eyebrow">ORGANIZE SEUS MOMENTOS</p><h2 id="routineDialogTitle">Nova rotina</h2></div><button type="button" class="dialog-close" data-close="routineDialog" aria-label="Fechar">×</button></div>
     <label>Nome da rotina<input name="name" required maxlength="100" placeholder="Ex.: Minha manhã tranquila" /></label>
@@ -250,8 +252,8 @@
     <p class="error-message" id="routineError" role="alert" hidden></p>
     <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="routineDialog">Cancelar</button><button type="submit" class="btn btn-primary">Salvar rotina</button></div>
   </form></dialog>
-  <dialog id="categoryDialog" class="modal category-modal">
-    <div class="modal-title"><div><p class="eyebrow">DEIXE DO SEU JEITO</p><h2>Meus blocos</h2></div><button type="button" class="dialog-close" data-close="categoryDialog" aria-label="Fechar">×</button></div>
+  <dialog id="categoryDialog" aria-labelledby="categoryDialogTitle" class="modal category-modal">
+    <div class="modal-title"><div><p class="eyebrow">DEIXE DO SEU JEITO</p><h2 id="categoryDialogTitle">Meus blocos</h2></div><button type="button" class="dialog-close" data-close="categoryDialog" aria-label="Fechar">×</button></div>
     <p class="muted small">Crie blocos como Amigos, Namoro, Faculdade ou Viagens e escolha a cor de cada um.</p>
     <div id="categoryList" class="category-list"></div>
     <form id="categoryForm" class="form-stack category-edit-form">
@@ -268,7 +270,7 @@
     <p class="error-message" id="confirmError" role="alert" hidden></p>
     <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="confirmDialog">Cancelar</button><button type="button" class="btn btn-danger" id="confirmDelete">Sim, excluir</button></div>
   </dialog>
-  <dialog id="goalDialog" class="modal goal-modal"><form id="goalForm" class="form-stack"><input type="hidden" name="id" />
+  <dialog id="goalDialog" aria-labelledby="goalDialogTitle" class="modal goal-modal"><form id="goalForm" class="form-stack"><input type="hidden" name="id" />
     <div class="modal-title"><div><p class="eyebrow">DÊ UM PASSO DE CADA VEZ</p><h2 id="goalDialogTitle">Novo objetivo</h2></div><button type="button" class="dialog-close" data-goal-close="goalDialog" aria-label="Fechar">×</button></div>
     <label>Nome do objetivo<input name="title" maxlength="140" required placeholder="Ex.: Concluir minha formação em Python" /></label>
     <label>Descrição (opcional)<textarea name="description" rows="3" maxlength="1200" placeholder="O que você deseja conquistar?"></textarea></label>
@@ -284,6 +286,6 @@
     <div class="modal-actions"><button type="button" class="btn btn-soft" data-close="logoutConfirmDialog">Continuar conectada</button><button type="button" class="btn btn-primary" id="logoutConfirm">Sim, sair</button></div>
   </dialog>
   <dialog id="goalConfirm" class="modal confirmation-modal" aria-labelledby="goalConfirmTitle"><div class="confirm-mark" aria-hidden="true">!</div><h2 id="goalConfirmTitle">Excluir objetivo?</h2><p class="muted" id="goalConfirmText"></p><p class="error-message" id="goalConfirmError" hidden role="alert"></p><div class="modal-actions"><button type="button" class="btn btn-soft" data-goal-close="goalConfirm">Cancelar</button><button type="button" class="btn btn-danger" id="goalConfirmSubmit">Sim, excluir</button></div></dialog>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>
