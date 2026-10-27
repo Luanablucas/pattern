@@ -5,6 +5,7 @@ const {validate}=require("../middleware/api");
 const {createToken,normalizeEmail}=require("../services/account-security");
 const {sendAccountEmail}=require("../services/email");
 const {clearCookie}=require("../middleware/auth");
+const {exportData,eraseAccount}=require("../services/privacy");
 const email=z.string().trim().email().max(254).transform(normalizeEmail);
 const password=z.string().min(10,"Use pelo menos 10 caracteres.").max(72);
 
@@ -70,5 +71,28 @@ module.exports=function createAccountController(db){
     const {rowCount}=await db.query("UPDATE auth_sessions SET revoked_at=NOW() WHERE user_id=$1 AND id<>$2 AND revoked_at IS NULL",[req.user.id,req.user.sid]);
     res.json({ok:true,ended:rowCount});
   }
-  return{profile,updateName,changePassword,changeEmail,sessions,revokeSession,revokeOthers};
+  async function exportPrivacy(req,res){
+    const body=validate(z.object({currentPassword:z.string().min(1).max(200)}).strict(),req,res);
+    if(!body)return;
+    const {rows}=await db.query("SELECT password_hash FROM users WHERE id=$1",[req.user.id]);
+    if(!rows[0]||!(await bcrypt.compare(body.currentPassword,rows[0].password_hash))){
+      return res.status(403).json({error:"A senha atual está incorreta."});
+    }
+    const archive=await exportData(db,req.user.id);
+    if(!archive)return res.status(404).json({error:"Conta não encontrada."});
+    const day=new Date().toISOString().slice(0,10);
+    res.set({"Cache-Control":"private, no-store, max-age=0","Content-Disposition":`attachment; filename="pattern-dados-${day}.json"`});
+    return res.json(archive);
+  }
+  async function deletePrivacy(req,res){
+    const body=validate(z.object({currentPassword:z.string().min(1).max(200),confirmation:z.literal("EXCLUIR")}).strict(),req,res);
+    if(!body)return;
+    const outcome=await eraseAccount(db,req.user.id,hash=>bcrypt.compare(body.currentPassword,hash));
+    if(outcome==="invalid")return res.status(403).json({error:"A senha atual está incorreta."});
+    if(outcome==="missing")return res.status(404).json({error:"Conta não encontrada."});
+    clearCookie(res);
+    res.set("Cache-Control","no-store");
+    return res.json({ok:true,redirect:"/login",message:"Conta e dados associados excluídos."});
+  }
+  return{profile,updateName,changePassword,changeEmail,sessions,revokeSession,revokeOthers,exportPrivacy,deletePrivacy};
 };

@@ -275,6 +275,33 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
       assert.equal((await send("/api/auth/login",{method:"POST",body:{email:userA,password:credential.resetA}})).status,401);
       assert.equal((await send("/api/auth/login",{method:"POST",body:{email:userANew,password:credential.resetA}})).status,200);
     });
+    await t.test("exportação isolada, senha obrigatória e exclusão irreversível de uma conta",async()=>{
+      const renewed=await send("/api/auth/login",{method:"POST",body:{email:userANew,password:credential.resetA}});
+      assert.equal(renewed.status,200);
+      cookies.a=renewed.cookie;
+      const unauthorized=await send("/api/account/privacy/export",{method:"POST",body:{currentPassword:credential.resetA}});
+      assert.equal(unauthorized.status,401);
+      const invalidExport=await send("/api/account/privacy/export",{method:"POST",cookie:cookies.a,body:{currentPassword:"senha-incorreta"}});
+      assert.equal(invalidExport.status,403);
+      const archive=await send("/api/account/privacy/export",{method:"POST",cookie:cookies.a,body:{currentPassword:credential.resetA}});
+      assert.equal(archive.status,200);
+      assert.equal(archive.data.formato,"pattern-export");
+      assert.equal(archive.data.conta.email,userANew);
+      assert.ok(archive.data.dados.tarefas.some(task=>task.title==="Tarefa secreta A"));
+      assert.ok(!JSON.stringify(archive.data).includes("password_hash"));
+      assert.ok(!JSON.stringify(archive.data).includes("token_hash"));
+      assert.ok(!JSON.stringify(archive.data).includes(userB));
+      const wrongConfirmation=await send("/api/account/privacy/delete",{method:"POST",cookie:cookies.b,body:{currentPassword:credential.b,confirmation:"apagar"}});
+      assert.equal(wrongConfirmation.status,400);
+      const wrongPassword=await send("/api/account/privacy/delete",{method:"POST",cookie:cookies.b,body:{currentPassword:"errada",confirmation:"EXCLUIR"}});
+      assert.equal(wrongPassword.status,403);
+      const removed=await send("/api/account/privacy/delete",{method:"POST",cookie:cookies.b,body:{currentPassword:credential.b,confirmation:"EXCLUIR"}});
+      assert.equal(removed.status,200);
+      assert.equal(removed.data.ok,true);
+      assert.equal((await send("/api/account",{cookie:cookies.b})).status,401);
+      assert.equal((await db.query("SELECT COUNT(*)::int AS count FROM users WHERE email=$1",[userB])).rows[0].count,0);
+      assert.equal((await send("/api/account",{cookie:cookies.a})).status,200);
+    });
   }finally{
     globalThis.fetch=nativeFetch;
     if(server)await close(server);

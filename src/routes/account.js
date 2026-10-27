@@ -5,6 +5,8 @@ const {accountLimiter}=require("../middleware/auth");
 module.exports=function register(app,db){
   const c=createController(db);
   app.get("/api/account",asyncRoute(c.profile));
+  app.post("/api/account/privacy/export",accountLimiter(),asyncRoute(c.exportPrivacy));
+  app.post("/api/account/privacy/delete",accountLimiter(),asyncRoute(c.deletePrivacy));
   app.patch("/api/account/profile",asyncRoute(c.updateName));
   app.post("/api/account/change-password",accountLimiter(),asyncRoute(c.changePassword));
   app.post("/api/account/change-email",accountLimiter(),asyncRoute(c.changeEmail));

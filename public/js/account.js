@@ -60,6 +60,48 @@ $("revokeOtherSessions").addEventListener("click",async()=>{
   try{const result=await api("/api/account/sessions/revoke-others",{method:"POST",body:{}});notice(`${result.ended} sessão(ões) encerrada(s).`);await loadSessions();}
   catch(error){notice(error.message,true);}
 });
+const exportForm=$("accountExportForm");
+exportForm.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const button=exportForm.querySelector('button[type="submit"]');
+  button.disabled=true;
+  try{
+    const response=await fetch("/api/account/privacy/export",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(Object.fromEntries(new FormData(exportForm)))});
+    if(response.status===401){window.location.assign("/login");return;}
+    if(!response.ok){const result=await response.json();throw new Error(result.error||"Não foi possível exportar seus dados.");}
+    const blob=await response.blob();
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement("a");
+    link.href=url;
+    link.download=`pattern-dados-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+    exportForm.reset();
+    notice("Arquivo de dados preparado. Guarde-o em um local seguro.");
+  }catch(error){notice(error.message,true);}
+  finally{button.disabled=false;}
+});
+const deleteDialog=$("accountDeleteDialog");
+const deleteForm=$("accountDeleteForm");
+function closeDelete(){deleteDialog.close();deleteForm.reset();$("accountDeleteError").hidden=true;}
+$("accountDeleteStart").addEventListener("click",()=>deleteDialog.showModal());
+$("accountDeleteClose").addEventListener("click",closeDelete);
+$("accountDeleteCancel").addEventListener("click",closeDelete);
+deleteForm.addEventListener("submit",async event=>{
+  event.preventDefault();
+  const button=$("accountDeleteConfirm");
+  const errorEl=$("accountDeleteError");
+  errorEl.hidden=true;
+  button.disabled=true;
+  try{
+    const result=await api("/api/account/privacy/delete",{method:"POST",body:Object.fromEntries(new FormData(deleteForm))});
+    if(result.ok){window.location.replace("/login");return;}
+    throw new Error("Não foi possível excluir a conta.");
+  }catch(error){errorEl.textContent=error.message;errorEl.hidden=false;}
+  finally{button.disabled=false;}
+});
 Promise.all([loadProfile(),loadSessions()]).then(()=>notice("Sua conta está atualizada.")).catch(error=>notice(error.message,true));
 
 })();

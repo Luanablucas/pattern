@@ -420,3 +420,13 @@ html[data-theme="dark"] .account-feedback.account-feedback-error{background:#422
 
 html[data-theme="dark"] :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #e5ceff;outline-offset:3px}
 html[data-theme="dark"] .calendar-scroll:focus-visible{outline-color:#e5ceff}
+
+.account-privacy-panel{margin-bottom:26px}
+.account-privacy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.account-privacy-section{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:15px;border:1px solid var(--stroke);border-radius:14px}
+.account-privacy-section h3{font-size:16px;margin:0}
+.account-privacy-section p{margin:0}
+.account-privacy-section form{width:100%}
+.account-danger-zone{border-color:#dca6b2}
+html[data-theme="dark"] .account-danger-zone{border-color:#865463}
+@media(max-width:750px){.account-privacy-grid{grid-template-columns:1fr}}
