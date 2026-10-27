@@ -15,12 +15,19 @@ const validate = (schema,req,res) => {
 };
 const verifyApiOrigin = (req,res,next) => {
   if (["POST","PUT","PATCH","DELETE"].includes(req.method)) {
-    if (req.method!=="DELETE" && !req.is("application/json")) return res.status(415).json({error:"Envie JSON."});
+    const site=req.get("sec-fetch-site");
+    if(site&&!(["same-origin","none"].includes(site)))return res.status(403).json({error:"Origem inválida."});
     const origin=req.get("origin");
-    if (origin) {
-      try {if(new URL(origin).host !==req.get("host")) return res.status(403).json({error:"Origem inválida."});}
-      catch (_) {return res.status(403).json({error:"Origem inválida."});}
+    if(origin){
+      try{
+        const parsed=new URL(origin);
+        const expected=process.env.NODE_ENV==="production"&&process.env.APP_BASE_URL
+          ?new URL(process.env.APP_BASE_URL).origin
+          :`${req.protocol}://${req.get("host")}`;
+        if(parsed.origin!==expected)return res.status(403).json({error:"Origem inválida."});
+      }catch(_){return res.status(403).json({error:"Origem inválida."});}
     }
+    if(req.method!=="DELETE"&&!req.is("application/json"))return res.status(415).json({error:"Envie JSON."});
   }
   next();
 };

@@ -33,6 +33,8 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
   let rejectMail=false;
   let pythonAvailable=true;
   let base="";
+  let csrfCookie="";
+  let csrfToken="";
   let schemaReady=false;
   const marker=randomBytes(8).toString("hex");
   const userA=`integration-${marker}-a@pattern.local`;
@@ -42,10 +44,12 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
   const originalEnvBase=process.env.APP_BASE_URL;
   const credential={a:"senha-de-teste-12345",b:"senha-de-teste-12345",newA:"senha-alterada-12345",resetA:"senha-redefinida-12345"};
   const cookies={};
-  const send=async(route,{method="GET",body,cookie,origin,headers={}}={})=>{
+  const send=async(route,{method="GET",body,cookie,origin,headers={},skipCsrf=false}={})=>{
+    const allCookies=[cookie,csrfCookie].filter(Boolean).join("; ");
+    const csrfHeader=!skipCsrf&&!["GET","HEAD","OPTIONS"].includes(method.toUpperCase())?{"x-csrf-token":csrfToken}:{};
     const response=await nativeFetch(`${base}${route}`,{
       method,
-      headers:{...(body!==undefined?{"content-type":"application/json"}:{}),...(cookie?{cookie}:{}),...(origin?{origin}:{}),...headers},
+      headers:{...(body!==undefined?{"content-type":"application/json"}:{}),...(allCookies?{cookie:allCookies}:{}),...csrfHeader,...(origin?{origin}:{}),...headers},
       ...(body!==undefined?{body:JSON.stringify(body)}:{}),
       redirect:"manual"
     });
@@ -99,6 +103,11 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
     const port=await listen(server);
     base=`http://127.0.0.1:${port}`;
     process.env.APP_BASE_URL=base;
+    const csrfPage=await nativeFetch(`${base}/login`);
+    assert.equal(csrfPage.status,200);
+    csrfCookie=csrfPage.headers.get("set-cookie")?.split(";")[0]||"";
+    assert.match(csrfCookie,/^pattern_csrf=/);
+    csrfToken=decodeURIComponent(csrfCookie.split("=")[1]);
 
     await t.test("cadastro grava conta pendente, envia link e bloqueia páginas privadas",async()=>{
       const a=await send("/api/auth/register",{method:"POST",body:{name:"Usuária A",email:userA,password:credential.a}});
@@ -210,6 +219,12 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
     });
 
     await t.test("origens externas e entradas inválidas são bloqueadas",async()=>{
+      assert.equal((await send("/api/tasks",{method:"POST",cookie:cookies.a,body:{title:"Sem CSRF"},skipCsrf:true})).status,403);
+      assert.equal((await send("/api/tasks",{method:"POST",cookie:cookies.a,body:{title:"CSRF inválido"},headers:{"x-csrf-token":"falso"}})).status,403);
+      assert.equal((await send("/api/tasks",{method:"POST",cookie:cookies.a,body:{title:"Fetch de outro site"},headers:{"sec-fetch-site":"cross-site"}})).status,403);
+      assert.equal((await send("/api/tasks",{method:"POST",cookie:cookies.a,body:{title:"Porta diferente"},origin:`http://127.0.0.1:${Number(new URL(base).port)+1}`})).status,403);
+      assert.equal((await send("/api/tasks",{method:"POST",cookie:cookies.a,body:{title:"Origem correta"},origin:base})).status,201);
+
       assert.equal((await send("/api/tasks",{method:"POST",cookie:cookies.a,body:{title:"Bloqueado"},origin:"https://outro-site.example"})).status,403);
       assert.equal((await send("/api/tasks",{method:"POST",cookie:cookies.a,body:{title:""}})).status,400);
       assert.equal((await send("/api/account/sessions/nao-uuid",{method:"DELETE",cookie:cookies.a})).status,400);

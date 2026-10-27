@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#f7f4fc" />
   <meta name="referrer" content="no-referrer" />
   <title><%= {login:'Entrar',register:'Criar conta',forgot:'Recuperar senha',reset:'Nova senha',verify:'Confirmar e-mail',pending:'Verifique seu e-mail'}[mode] %> — Pattern</title>
+  <script src="<%= assetUrl('/static/js/csrf.js') %>"></script>
   <script src="<%= assetUrl('/static/js/theme.js') %>"></script>
   <link rel="stylesheet" href="<%= assetUrl('/static/css/style.css') %>" />
   <link rel="stylesheet" href="<%= assetUrl('/static/css/theme.css') %>" />

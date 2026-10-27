@@ -10,6 +10,7 @@ const cookieOptions={
 };
 const authLimiter=rateLimit({windowMs:15*60*1000,limit:12,standardHeaders:"draft-7",legacyHeaders:false});
 const recoveryLimiter=()=>rateLimit({windowMs:15*60*1000,limit:5,standardHeaders:"draft-7",legacyHeaders:false});
+const accountLimiter=()=>rateLimit({windowMs:15*60*1000,limit:6,standardHeaders:"draft-7",legacyHeaders:false});
 
 async function getUser(req,db){
   const cookie=req.cookies?.pattern_token;
@@ -52,4 +53,4 @@ function issueCookie(res,user,sid){
   res.cookie("pattern_token",token,cookieOptions);
 }
 function clearCookie(res){res.clearCookie("pattern_token",{path:"/",sameSite:cookieOptions.sameSite,secure:cookieOptions.secure,httpOnly:true});}
-module.exports={getUser,requireAuth,requirePageAuth,issueCookie,clearCookie,authLimiter,recoveryLimiter,cookieOptions};
+module.exports={getUser,requireAuth,requirePageAuth,issueCookie,clearCookie,authLimiter,recoveryLimiter,accountLimiter,cookieOptions};

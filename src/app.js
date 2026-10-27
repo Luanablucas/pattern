@@ -4,6 +4,7 @@ const path=require("node:path");
 const helmet=require("helmet");
 const cookieParser=require("cookie-parser");
 const {verifyApiOrigin}=require("./middleware/api");
+const {issueCsrfCookie,verifyCsrf}=require("./middleware/csrf");
 const {requireAuth}=require("./middleware/auth");
 const {assetUrl}=require("./utils/assets");
 
@@ -23,8 +24,9 @@ function createApp(db) {
     }
     next();
   });
+  app.use(issueCsrfCookie);
   app.use("/static",express.static(path.join(__dirname,"..","public"),{maxAge:"2h"}));
-  app.use("/api",verifyApiOrigin);
+  app.use("/api",verifyApiOrigin,verifyCsrf);
   require("./routes/pages")(app,db);
   require("./routes/auth")(app,db);
   app.use("/api",requireAuth(db));
