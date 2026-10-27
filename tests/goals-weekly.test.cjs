@@ -99,3 +99,37 @@ test("listagem de objetivos inclui etapas, links e progresso",async()=>{
   assert.equal(result[0].tasks.length,1);
   assert.equal(result[0].habits.length,1);
 });
+
+test("criar objetivo usa parâmetro booleano separado para concluir",async()=>{
+  await withZodMock(async()=>{
+    const calls=[];
+    const db={query:async(sql,params)=>{calls.push({sql,params});return {rows:[{id:"goal-created"}],rowCount:1};}};
+    const ctrl=require("../src/controllers/goals")(db);
+    const res={status(){return this;},json(value){return value;}};
+    const body={title:"Curso",description:"",category:"Estudos",priority:"high",dueDate:null,status:"completed"};
+    await ctrl.create({user:{id:"user-A"},body},res);
+    assert.match(calls[0].sql,/CASE WHEN \$9 THEN NOW\(\)/);
+    assert.equal(calls[0].params.length,9);
+    assert.equal(calls[0].params[7],"completed");
+    assert.equal(calls[0].params[8],true);
+    await ctrl.create({user:{id:"user-A"},body:{...body,status:"active"}},res);
+    assert.equal(calls[1].params[8],false);
+  });
+});
+
+test("atualizar objetivo não mistura tipos do parâmetro de situação",async()=>{
+  await withZodMock(async()=>{
+    const calls=[];
+    const db={query:async(sql,params)=>{calls.push({sql,params});return {rows:[{id:"goal-A"}],rowCount:1};}};
+    const ctrl=require("../src/controllers/goals")(db);
+    const res={status(){return this;},json(value){return value;}};
+    const body={title:"Curso",description:"",category:"Estudos",priority:"high",dueDate:null,status:"completed"};
+    await ctrl.update({user:{id:"user-A"},params:{id:"goal-A"},body},res);
+    assert.match(calls[0].sql,/CASE WHEN \$9 THEN COALESCE\(completed_at,NOW\(\)\)/);
+    assert.equal(calls[0].params.length,9);
+    assert.equal(calls[0].params[5],"completed");
+    assert.equal(calls[0].params[8],true);
+    await ctrl.update({user:{id:"user-A"},params:{id:"goal-A"},body:{...body,status:"paused"}},res);
+    assert.equal(calls[1].params[8],false);
+  });
+});

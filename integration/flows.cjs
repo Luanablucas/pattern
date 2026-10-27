@@ -170,6 +170,16 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
       assert.equal((await send(`/api/habits/${habit.data.id}`,{method:"DELETE",cookie:cookies.b})).status,404);
       const goal=await send("/api/goals",{method:"POST",cookie:cookies.a,body:{title:"Objetivo privado A"}});
       assert.equal(goal.status,201);
+      const goalUpdate=await send(`/api/goals/${goal.data.id}`,{method:"PUT",cookie:cookies.a,body:{title:"Objetivo privado A",description:"",category:"Pessoal",priority:"medium",dueDate:null,status:"completed"}});
+      assert.equal(goalUpdate.status,200);
+      const completedGoal=(await db.query("SELECT status,completed_at FROM goals WHERE id=$1",[goal.data.id])).rows[0];
+      assert.equal(completedGoal.status,"completed");
+      assert.ok(completedGoal.completed_at);
+      const goalReopen=await send(`/api/goals/${goal.data.id}`,{method:"PUT",cookie:cookies.a,body:{title:"Objetivo privado A",description:"",category:"Pessoal",priority:"medium",dueDate:null,status:"active"}});
+      assert.equal(goalReopen.status,200);
+      const reopenedGoal=(await db.query("SELECT status,completed_at FROM goals WHERE id=$1",[goal.data.id])).rows[0];
+      assert.equal(reopenedGoal.status,"active");
+      assert.equal(reopenedGoal.completed_at,null);
       assert.equal((await send("/api/goals",{cookie:cookies.b})).data.length,0);
       assert.equal((await send(`/api/goals/${goal.data.id}`,{method:"DELETE",cookie:cookies.b})).status,404);
       const categories=await send("/api/event-categories",{cookie:cookies.a});

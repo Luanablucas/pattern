@@ -52,16 +52,16 @@ module.exports = function createGoalsController(db) {
     if (!body) return;
     const id = randomUUID();
     const { rows } = await db.query(`INSERT INTO goals(id,user_id,title,description,category,priority,due_date,status,completed_at)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8,CASE WHEN $8='completed' THEN NOW() ELSE NULL END)
-      RETURNING id`, [id,req.user.id,body.title,body.description,body.category,body.priority,body.dueDate,body.status]);
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,CASE WHEN $9 THEN NOW() ELSE NULL END)
+      RETURNING id`, [id,req.user.id,body.title,body.description,body.category,body.priority,body.dueDate,body.status,body.status === "completed"]);
     res.status(201).json({ id: rows[0].id });
   };
   const update = async (req, res) => {
     const body = validate(goalSchema, req, res);
     if (!body) return;
     const { rows } = await db.query(`UPDATE goals SET title=$1,description=$2,category=$3,priority=$4,due_date=$5,
-      status=$6,completed_at=CASE WHEN $6='completed' THEN COALESCE(completed_at,NOW()) ELSE NULL END,updated_at=NOW()
-      WHERE id=$7 AND user_id=$8 RETURNING id`, [body.title,body.description,body.category,body.priority,body.dueDate,body.status,req.params.id,req.user.id]);
+      status=$6,completed_at=CASE WHEN $9 THEN COALESCE(completed_at,NOW()) ELSE NULL END,updated_at=NOW()
+      WHERE id=$7 AND user_id=$8 RETURNING id`, [body.title,body.description,body.category,body.priority,body.dueDate,body.status,req.params.id,req.user.id,body.status === "completed"]);
     if (!rows[0]) return res.status(404).json({ error: "Objetivo não encontrado." });
     res.json({ id: rows[0].id });
   };
