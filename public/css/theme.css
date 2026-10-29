@@ -439,3 +439,6 @@ html[data-theme="dark"] .assistant-consent input{accent-color:#c5a5f2}
 
 html[data-theme="dark"] .assistant-action-card{background:var(--surface);border-color:var(--stroke)}
 html[data-theme="dark"] .assistant-action-card h3,html[data-theme="dark"] .assistant-action-card strong{color:var(--ink)}
+
+html[data-theme="dark"] .cal-entry.cal-habit,html[data-theme="dark"] .day-banner-habit{background:#263d3d;color:#b9e7dc;border-color:#4c837b}
+html[data-theme="dark"] .cal-entry.cal-habit.is-complete,html[data-theme="dark"] .day-banner-habit.is-complete{background:#2c4538;color:#c2ecd0}

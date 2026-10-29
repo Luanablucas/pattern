@@ -60,7 +60,7 @@
     });
     show("focusDurationWrap", state.mode === "pomodoro");
     element("focusDuration").disabled = active || state.busy;
-    element("focusTask").disabled = active || state.busy;
+    element("focusTarget").disabled = active || state.busy;
     document.querySelectorAll("[data-focus-minutes]").forEach(button => { button.disabled = active || state.busy; });
     show("focusStart", !active);
     show("focusPause", active && session.status === "running");
@@ -68,7 +68,7 @@
     show("focusFinish", active);
     ["focusStart", "focusPause", "focusResume", "focusFinish"].forEach(id => element(id).disabled = state.busy);
     element("focusStatus").textContent = !active ? "Pronta para começar" : session.status === "running" ? "Sessão em andamento" : "Sessão pausada";
-    element("focusCurrentTask").textContent = active ? (session.taskTitle || "Sessão de foco livre") : "Escolha uma tarefa ou comece livremente.";
+    element("focusCurrentTask").textContent = active ? (session.taskTitle || session.habitTitle || "Sessão de foco livre") : "Escolha uma tarefa, um hábito ou comece livremente.";
     document.querySelectorAll("[data-focus-minutes]").forEach(button => {
       const selected = Number(button.dataset.focusMinutes) === Number(element("focusDuration").value);
       button.classList.toggle("is-active", selected);
@@ -109,7 +109,7 @@
       }).join("");
       element("focusHistory").innerHTML = data.sessions.length ? data.sessions.map(session => {
         const date = new Date(session.finishedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
-        const name = session.taskTitle || "Foco sem tarefa";
+        const name = session.taskTitle || session.habitTitle || "Foco livre";
         const label = session.mode === "pomodoro" ? "Pomodoro" : "Cronômetro livre";
         return `<div class="focus-history-row"><div class="focus-history-symbol">✳</div><div class="focus-history-detail"><strong>${safe(name)}</strong><span>${safe(date)} · ${label}</span></div><strong class="focus-history-duration">${formatTotal(session.elapsedSeconds)}</strong></div>`;
       }).join("") : `<div class="empty"><strong>Seu histórico começa aqui</strong>Inicie uma sessão e registre seu primeiro momento de foco.</div>`;
@@ -126,7 +126,14 @@
     }
     state.breakUntil = null;
     show("focusBreakPanel", false);
-    const response = await call("/api/focus/start", { mode: state.mode, durationMinutes: state.mode === "pomodoro" ? duration : null, taskId: element("focusTask").value || null });
+    const target = element("focusTarget").value;
+    const [type, id] = target ? target.split(":") : [null, null];
+    const response = await call("/api/focus/start", {
+      mode: state.mode,
+      durationMinutes: state.mode === "pomodoro" ? duration : null,
+      taskId: type === "task" ? id : null,
+      habitId: type === "habit" ? id : null
+    });
     if (response) toast("Sessão de foco iniciada.");
   };
   const finishSession = async (automatic = false) => {
@@ -198,7 +205,7 @@
   document.addEventListener("visibilitychange", () => { if (!document.hidden && state.session) refresh(); });
   window.addEventListener("pageshow", (event) => { if (event.persisted) refresh(); });
   setInterval(updateClock, 500);
-  Promise.all([api("/api/tasks?list=1"), api("/api/focus/active")]).then(([tasks, current]) => {
+  Promise.all([api("/api/tasks?list=1"), api("/api/habits"), api("/api/focus/active")]).then(([tasks, habits, current]) => {
     const byId = new Map();
     tasks.forEach(task => {
       if (task.completed) return;
@@ -206,7 +213,10 @@
       if (!byId.has(id)) byId.set(id, task.title);
     });
     const items = [...byId.entries()].sort((a, b) => a[1].localeCompare(b[1], "pt-BR"));
-    element("focusTask").innerHTML = '<option value="">Sem tarefa vinculada</option>' + items.map(([id, name]) => `<option value="${safe(id)}">${safe(name)}</option>`).join("");
+    const taskOptions = items.map(([id, name]) => `<option value="task:${safe(id)}">${safe(name)}</option>`).join("");
+    const habitOptions = habits.habits.slice().sort((a, b) => a.name.localeCompare(b.name, "pt-BR")).map(habit => `<option value="habit:${safe(habit.id)}">${safe(habit.name)}</option>`).join("");
+    element("focusTarget").innerHTML = `<option value="">Sem vínculo</option><optgroup label="Tarefas">${taskOptions}</optgroup><optgroup label="Hábitos">${habitOptions}</optgroup>`;
+    if (current.session) element("focusTarget").value = current.session.taskId ? `task:${current.session.taskId}` : current.session.habitId ? `habit:${current.session.habitId}` : "";
     readSession(current);
   }).catch(failed);
   loadHistory();

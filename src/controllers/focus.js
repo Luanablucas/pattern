@@ -7,8 +7,12 @@ module.exports = function createFocusController(db) {
   const startSchema = z.object({
     mode: z.enum(["pomodoro", "free"]),
     durationMinutes: z.number().int().min(5).max(180).nullable(),
-    taskId: z.string().uuid().nullable()
+    taskId: z.string().uuid().nullable(),
+    habitId: z.string().uuid().nullable().default(null)
   }).strict().superRefine((value, context) => {
+    if (value.taskId && value.habitId) {
+      context.addIssue({ code: "custom", message: "Escolha uma tarefa ou um hábito, não ambos." });
+    }
     if (value.mode === "pomodoro" && value.durationMinutes === null) {
       context.addIssue({ code: "custom", message: "Defina a duração do Pomodoro." });
     }
@@ -17,7 +21,7 @@ module.exports = function createFocusController(db) {
     }
   });
 
-  const fields = `id,task_id AS "taskId",task_title AS "taskTitle",mode,planned_seconds AS "plannedSeconds",status,started_at AS "startedAt",active_since AS "activeSince",paused_at AS "pausedAt",elapsed_seconds AS "elapsedSeconds",pause_seconds AS "pauseSeconds",finished_at AS "finishedAt"`;
+  const fields = `id,task_id AS "taskId",task_title AS "taskTitle",habit_id AS "habitId",habit_title AS "habitTitle",mode,planned_seconds AS "plannedSeconds",status,started_at AS "startedAt",active_since AS "activeSince",paused_at AS "pausedAt",elapsed_seconds AS "elapsedSeconds",pause_seconds AS "pauseSeconds",finished_at AS "finishedAt"`;
   const activeQuery = `SELECT ${fields} FROM focus_sessions WHERE user_id=$1 AND status IN ('running','paused') LIMIT 1`;
 
 const {finishExpired}=createFocusService(db);
@@ -32,18 +36,24 @@ const start = async (req, res) => {
     const result = startSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.issues[0].message });
     await finishExpired(req.user.id);
-    const { mode, durationMinutes, taskId } = result.data;
+    const { mode, durationMinutes, taskId, habitId } = result.data;
     let taskTitle = null;
+    let habitTitle = null;
     if (taskId) {
       const task = await db.query("SELECT title FROM tasks WHERE id=$1 AND user_id=$2", [taskId, req.user.id]);
       if (!task.rowCount) return res.status(400).json({ error: "Tarefa não encontrada." });
       taskTitle = task.rows[0].title;
     }
+    if (habitId) {
+      const habit = await db.query("SELECT name FROM habits WHERE id=$1 AND user_id=$2", [habitId, req.user.id]);
+      if (!habit.rowCount) return res.status(400).json({ error: "Hábito não encontrado." });
+      habitTitle = habit.rows[0].name;
+    }
     try {
       const { rows } = await db.query(`INSERT INTO focus_sessions
-        (id,user_id,task_id,task_title,mode,planned_seconds,status,started_at,active_since)
-        VALUES($1,$2,$3,$4,$5,$6,'running',NOW(),NOW()) RETURNING ${fields}`,
-      [randomUUID(), req.user.id, taskId, taskTitle, mode, mode === "pomodoro" ? durationMinutes * 60 : null]);
+        (id,user_id,task_id,task_title,habit_id,habit_title,mode,planned_seconds,status,started_at,active_since)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,'running',NOW(),NOW()) RETURNING ${fields}`,
+      [randomUUID(), req.user.id, taskId, taskTitle, habitId, habitTitle, mode, mode === "pomodoro" ? durationMinutes * 60 : null]);
       respond(res, rows[0], 201);
     } catch (error) {
       if (error.code === "23505") return res.status(409).json({ error: "Você já possui uma sessão de foco em andamento." });
@@ -116,7 +126,7 @@ const calendar = async (req, res) => {
     const from = new Date(range.data.from),to = new Date(range.data.to);
     if (to <= from || to-from > 70*86400000) return res.status(400).json({error:"Informe um período de até 70 dias."});
     await finishExpired(req.user.id);
-    const {rows} = await db.query(`SELECT id,task_title AS "taskTitle",started_at AS "startedAt",finished_at AS "finishedAt",elapsed_seconds AS "elapsedSeconds",mode FROM focus_sessions WHERE user_id=$1 AND status='completed' AND finished_at>=$2 AND started_at<$3 ORDER BY started_at ASC LIMIT 600`,[req.user.id,from.toISOString(),to.toISOString()]);
+    const {rows} = await db.query(`SELECT id,task_title AS "taskTitle",habit_title AS "habitTitle",started_at AS "startedAt",finished_at AS "finishedAt",elapsed_seconds AS "elapsedSeconds",mode FROM focus_sessions WHERE user_id=$1 AND status='completed' AND finished_at>=$2 AND started_at<$3 ORDER BY started_at ASC LIMIT 600`,[req.user.id,from.toISOString(),to.toISOString()]);
     res.json(rows);
   };
 return {active,start,pause,resume,finish,history,calendar};

@@ -482,6 +482,18 @@ function timelineLayout(entries,day) {
   flush();
   return groups.flatMap(g=>g.map(e=>({...e,columns:Math.max(...g.map(x=>x.column))+1})));
 }
+function calendarHabitEntries(day) {
+  return state.habits.filter(habit => HabitRules.isScheduled(habit, day));
+}
+function habitCalendarCard(habit, day, banner = false) {
+  const done = state.entries.some(entry => entry.habitId === habit.id && entry.date === day);
+  const time = habit.preferredTime || "Sem horário";
+  const historyStart = HabitRules.shifted(todayISO(), -90);
+  const status = done ? "Concluído" : day < historyStart ? "Registro não disponível" : "Planejado";
+  const label = `${habit.name}: ${time} · ${status}`;
+  const style = banner ? "day-banner-habit" : "cal-entry cal-habit";
+  return `<button type="button" class="${style}${done ? " is-complete" : ""}" data-calendar-habit-check="${habit.id}" data-date="${day}" title="${escapeHTML(label)}" aria-label="${escapeHTML(label)}. Clique para marcar ou desmarcar."><span class="cal-entry-symbol" aria-hidden="true">${done ? "✓" : "◷"}</span><span class="cal-entry-title">${escapeHTML(habit.name)}</span><span class="cal-entry-time">${escapeHTML(time)} ↻</span></button>`;
+}
 function focusDayEntries(day) {
   return state.focusCalendar.filter(f=>new Date(f.startedAt)<new Date(`${day}T23:59:59`) && new Date(f.finishedAt)>new Date(`${day}T00:00:00`));
 }
@@ -491,9 +503,10 @@ function renderDailyTimeline(day) {
   const allDay=events.filter(e=>e.timeMode==='all_day');
   const timed=events.filter(e=>e.timeMode!=='all_day');
   const focus=focusDayEntries(day);
+  const habits=calendarHabitEntries(day);
   const conflicts=conflictIds(events);
-  const banner=[...allDay.map(ev=>`<button type="button" class="day-banner-event" style="--event-accent:${displayColor(ev.categoryColor)}" data-event-edit="${ev.id}" draggable="true" data-event-drag="${ev.id}">Dia inteiro · ${escapeHTML(ev.title)}${ev.isRecurring?' ↻':''}</button>`),...tasks.map(t=>`<button type="button" class="day-banner-task" data-task-edit="${t.id}" ${!t.isRecurring?`draggable="true" data-task-drag="${t.id}"`:''}>☑ ${escapeHTML(t.title)}${t.isRecurring?' ↻':''}</button>`)].join('');
-  const entries=timelineLayout([...timed.map(ev=>({kind:'event',id:ev.id,title:ev.title,startsAt:ev.startsAt,endsAt:ev.endsAt,event:ev})),...focus.map(f=>({kind:'focus',id:f.id,title:f.taskTitle||'Sessão de foco',startsAt:f.startedAt,endsAt:f.finishedAt,focus:f}))],day);
+  const banner=[...habits.map(habit => habitCalendarCard(habit, day, true)),...allDay.map(ev=>`<button type="button" class="day-banner-event" style="--event-accent:${displayColor(ev.categoryColor)}" data-event-edit="${ev.id}" draggable="true" data-event-drag="${ev.id}">Dia inteiro · ${escapeHTML(ev.title)}${ev.isRecurring?' ↻':''}</button>`),...tasks.map(t=>`<button type="button" class="day-banner-task" data-task-edit="${t.id}" ${!t.isRecurring?`draggable="true" data-task-drag="${t.id}"`:''}>☑ ${escapeHTML(t.title)}${t.isRecurring?' ↻':''}</button>`)].join('');
+  const entries=timelineLayout([...timed.map(ev=>({kind:'event',id:ev.id,title:ev.title,startsAt:ev.startsAt,endsAt:ev.endsAt,event:ev})),...focus.map(f=>({kind:'focus',id:f.id,title:f.taskTitle||f.habitTitle||'Sessão de foco',startsAt:f.startedAt,endsAt:f.finishedAt,focus:f}))],day);
   const hours=Array.from({length:24},(_,h)=>`<div class="day-hour-drop" style="top:${h*60}px" data-drop-date="${day}" data-drop-time="${String(h).padStart(2,'0')}:00" aria-label="Mover para ${String(h).padStart(2,'0')}:00"></div>`).join('');
   const cards=entries.map(e=>{
     const common=`style="top:${e.top}px;height:${Math.max(24,e.end-e.top)}px;left:calc(${e.column} * (100% / ${e.columns}) + 4px);width:calc(100% / ${e.columns} - 8px);"`;
@@ -501,7 +514,7 @@ function renderDailyTimeline(day) {
     const ev=e.event;
     return `<button class="day-time-card day-event ${conflicts.has(ev.id)?'has-conflict':''}" ${common.replace('style="',`style="--event-accent:${displayColor(ev.categoryColor)};`)} type="button" draggable="true" data-event-drag="${ev.id}" data-event-edit="${ev.id}" title="${conflicts.has(ev.id)?'Horário em conflito · ':''}Editar ${escapeHTML(ev.title)}"><span>${escapeHTML(eventTimeLabel(ev))}${ev.isRecurring?' ↻':''}</span><strong>${escapeHTML(ev.title)}</strong>${conflicts.has(ev.id)?'<small>⚠ Conflito de horário</small>':''}</button>`;
   }).join('');
-  $('#calendarDayView').innerHTML=`<div class="day-heading"><strong>${escapeHTML(fromISO(day).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}</strong><button class="btn btn-soft" type="button" data-day-create="${day}">+ Compromisso</button></div><div class="day-banner" data-drop-date="${day}">${banner||'<span class="muted small">Sem tarefas ou eventos de dia inteiro.</span>'}</div><div class="day-timeline-layout"><div class="day-timeline-hours">${Array.from({length:24},(_,h)=>`<span style="top:${h*60}px">${String(h).padStart(2,'0')}:00</span>`).join('')}</div><div class="day-timeline-track">${hours}${cards}</div></div><p class="muted small">Os blocos de foco representam sessões registradas. Compromissos com horário indefinido aparecem conforme o período escolhido.</p>`;
+  $('#calendarDayView').innerHTML=`<div class="day-heading"><strong>${escapeHTML(fromISO(day).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}</strong><button class="btn btn-soft" type="button" data-day-create="${day}">+ Compromisso</button></div><div class="day-banner" data-drop-date="${day}">${banner||'<span class="muted small">Sem tarefas, hábitos ou eventos de dia inteiro.</span>'}</div><div class="day-timeline-layout"><div class="day-timeline-hours">${Array.from({length:24},(_,h)=>`<span style="top:${h*60}px">${String(h).padStart(2,'0')}:00</span>`).join('')}</div><div class="day-timeline-track">${hours}${cards}</div></div><p class="muted small">Os blocos de foco representam sessões registradas. Compromissos com horário indefinido aparecem conforme o período escolhido.</p>`;
 }
 function renderCalendar() {
   if (page !== "calendar") return;
@@ -532,8 +545,9 @@ function renderCalendar() {
       const tasks = state.tasks.filter((task) => task.dueDate === date);
       const events = visibleCalendarEvents().filter((event) => overlapsDay(event, date));
       const focuses=focusDayEntries(date);
+      const habits=calendarHabitEntries(date);
       const conflicts=conflictIds(events);
-      const hasPlans = tasks.length + events.length + focuses.length > 0;
+      const hasPlans = tasks.length + events.length + focuses.length + habits.length > 0;
       const eventCards = events
         .map((event) => {
           const categoryColor=displayColor(event.categoryColor);
@@ -551,7 +565,8 @@ function renderCalendar() {
       <span class="cal-entry-symbol" aria-hidden="true">${task.completed ? "✓" : "☐"}</span><span class="cal-entry-title">${escapeHTML(task.title)}</span>${task.isRecurring?`<span class="cal-entry-time">↻</span>`:""}</button>`,
         )
         .join("");
-      const focusCards=focuses.map(f=>`<div class="cal-entry cal-focus" title="Foco registrado: ${escapeHTML(f.taskTitle||'Sessão livre')}">◷ ${escapeHTML(f.taskTitle||'Foco')} · ${Math.round(f.elapsedSeconds/60)}min</div>`).join('');
+      const habitCards=habits.map(habit => habitCalendarCard(habit, date)).join("");
+      const focusCards=focuses.map(f=>`<div class="cal-entry cal-focus" title="Foco registrado: ${escapeHTML(f.taskTitle||f.habitTitle||'Sessão livre')}">◷ ${escapeHTML(f.taskTitle||f.habitTitle||'Foco')} · ${Math.round(f.elapsedSeconds/60)}min</div>`).join('');
       const label = d.toLocaleDateString("pt-BR", {
         weekday: "long",
         day: "numeric",
@@ -560,7 +575,7 @@ function renderCalendar() {
       });
       return `<div class="calendar-day ${date === today ? "today" : ""} ${state.calendarView === "month" && d.getMonth() !== state.calendarCursor.getMonth() ? "outside-month" : ""}" data-drop-date="${date}" aria-label="${escapeHTML(label)}">
       <div class="calendar-day-head"><button type="button" class="calendar-day-num calendar-open-day" data-calendar-day="${date}" title="Ver dia ${date}" ${date === today ? 'aria-current="date"' : ""}>${d.getDate()}</button><button type="button" class="calendar-add" data-day-create="${date}" aria-label="Novo compromisso em ${escapeHTML(label)}" title="Novo compromisso neste dia">+</button></div>
-      <div class="calendar-day-body">${eventCards}${taskCards}${focusCards}${!hasPlans ? '<span class="calendar-day-free">Dia livre</span>' : ""}</div>
+      <div class="calendar-day-body">${eventCards}${taskCards}${habitCards}${focusCards}${!hasPlans ? '<span class="calendar-day-free">Dia livre</span>' : ""}</div>
     </div>`;
     })
     .join("");
@@ -594,15 +609,18 @@ async function loadCalendarEvents() {
   to.setHours(0, 0, 0, 0);
   $("#calendarFeedback").textContent = "Atualizando compromissos...";
   try {
-    const [events,tasks,focus] = await Promise.all([
+    const [events,tasks,focus,habitsData] = await Promise.all([
       api(`/api/events?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`),
       api(`/api/tasks?from=${localISO(from)}&to=${localISO(new Date(to.getTime()-86400000))}`),
-      api(`/api/focus/calendar?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`)
+      api(`/api/focus/calendar?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`),
+      api("/api/habits")
     ]);
     if (request !== state.calendarRequest) return;
     state.events = events;
     state.tasks=tasks;
     state.focusCalendar=focus;
+    state.habits=habitsData.habits;
+    state.entries=habitsData.entries;
     renderCalendar();
     $("#calendarFeedback").textContent = "";
   } catch (error) {
@@ -671,6 +689,7 @@ async function refreshHabits() {
   state.entries = data.entries;
   if (page === "habits") renderHabits();
   if (page === "app") renderDashboard();
+  if (page === "calendar") renderCalendar();
 }
 function openTask(task = null, { forToday = false } = {}) {
   const dialog = $("#taskDialog");
@@ -890,6 +909,15 @@ document.addEventListener("click", async (e) => {
     if (target.dataset.habitDelete) {
       const habit=state.habits.find(h=>h.id===target.dataset.habitDelete);
       askDelete({kind:'habit',id:habit?.id,title:habit?.name||'este hábito'});
+      return;
+    }
+    if (target.dataset.calendarHabitCheck) {
+      const date = target.dataset.date;
+      if (date > todayISO()) return toast("Você poderá registrar o hábito nesse dia.");
+      if (date < HabitRules.shifted(todayISO(), -90)) return toast("O registro de hábitos está disponível para os últimos 90 dias.");
+      await api(`/api/habits/${target.dataset.calendarHabitCheck}/check`, { method: "POST", body: { date } });
+      await refreshHabits();
+      toast("Registro do hábito atualizado.");
       return;
     }
     if (target.dataset.habitCheck) {

@@ -77,7 +77,8 @@ module.exports = function createAnalyticsController(db) {
       AND (finished_at AT TIME ZONE 'America/Sao_Paulo')::date BETWEEN $2::date AND $3::date
       GROUP BY 1 ORDER BY 1`, [req.user.id, currentDays[0].date, today]);
 
-    const focusTasks = await db.query(`SELECT COALESCE(NULLIF(task_title,''),'Sem tarefa vinculada') AS title,
+    const focusTasks = await db.query(`SELECT CASE WHEN habit_title IS NOT NULL THEN 'Hábito: ' || habit_title
+        WHEN task_title IS NOT NULL THEN 'Tarefa: ' || task_title ELSE 'Foco livre' END AS title,
       COALESCE(SUM(elapsed_seconds),0)::bigint AS seconds,COUNT(*)::int AS sessions
       FROM focus_sessions WHERE user_id=$1 AND status='completed'
       AND (finished_at AT TIME ZONE 'America/Sao_Paulo')::date BETWEEN $2::date AND $3::date

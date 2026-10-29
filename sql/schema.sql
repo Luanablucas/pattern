@@ -162,6 +162,15 @@ CREATE TABLE IF NOT EXISTS focus_sessions (
     OR (status='paused' AND paused_at IS NOT NULL AND active_since IS NULL AND finished_at IS NULL)
     OR (status='completed' AND active_since IS NULL AND paused_at IS NULL AND finished_at IS NOT NULL))
 );
+ALTER TABLE focus_sessions ADD COLUMN IF NOT EXISTS habit_id UUID REFERENCES habits(id) ON DELETE SET NULL;
+ALTER TABLE focus_sessions ADD COLUMN IF NOT EXISTS habit_title VARCHAR(100);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='focus_single_target_check' AND conrelid='focus_sessions'::regclass) THEN
+    ALTER TABLE focus_sessions ADD CONSTRAINT focus_single_target_check CHECK (task_id IS NULL OR habit_id IS NULL);
+  END IF;
+END $$;
+CREATE INDEX IF NOT EXISTS idx_focus_habit ON focus_sessions(habit_id,finished_at DESC) WHERE habit_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_focus_user_active ON focus_sessions(user_id)
   WHERE status IN ('running','paused');
 CREATE INDEX IF NOT EXISTS idx_focus_user_finished ON focus_sessions(user_id,finished_at DESC)

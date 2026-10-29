@@ -2621,3 +2621,11 @@ textarea {
 .assistant-action-card[data-finished="true"]{border-color:var(--violet)}
 .assistant-action-feedback{min-height:1.4em}
 @media(max-width:450px){.assistant-action-buttons{flex-direction:column}}
+
+.cal-entry.cal-habit{background:#ecf5f5;border-left-color:#6eaba6;color:#3f7775;cursor:pointer}
+.cal-entry.cal-habit.is-complete{background:#e4f2e9;color:#4b7c65}
+.cal-entry.cal-habit.is-complete .cal-entry-title{text-decoration:line-through}
+.day-banner-habit{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9e3df;border-left:4px solid #6eaba6;border-radius:10px;background:#eef8f6;color:#3f7775;font-size:11px;padding:8px 10px;max-width:100%;cursor:pointer}
+.day-banner-habit.is-complete{background:#e4f2e9}
+.day-banner-habit .cal-entry-title{overflow-wrap:anywhere}
+.day-banner-habit .cal-entry-time{font-size:10px;white-space:nowrap}

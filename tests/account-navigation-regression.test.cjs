@@ -24,7 +24,8 @@ test("Minha conta carrega perfil e sessoes sem colidir com o JavaScript principa
   const els = Object.fromEntries([
     "accountStatus", "accountNameForm", "accountEmailForm", "accountPasswordForm",
     "accountEmail", "accountVerification", "resendVerification", "pendingEmail",
-    "accountSessions", "revokeOtherSessions"
+    "accountSessions", "revokeOtherSessions", "accountExportForm", "accountDeleteDialog", "accountDeleteForm",
+    "accountDeleteError", "accountDeleteStart", "accountDeleteClose", "accountDeleteCancel", "accountDeleteConfirm"
   ].map(id => [id, element()]));
   const requests = [];
   const context = vm.createContext({
