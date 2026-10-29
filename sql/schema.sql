@@ -280,3 +280,16 @@ CREATE TABLE IF NOT EXISTS auth_tokens (
   used_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_auth_tokens_user ON auth_tokens(user_id,purpose,expires_at) WHERE used_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS ai_action_proposals (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  action_type VARCHAR(24) NOT NULL CHECK (action_type IN ('create_task','create_event')),
+  arguments JSONB NOT NULL,
+  status VARCHAR(12) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','executed','rejected')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  decided_at TIMESTAMPTZ,
+  created_id UUID
+);
+CREATE INDEX IF NOT EXISTS idx_ai_action_proposals_user ON ai_action_proposals(user_id,status,expires_at);

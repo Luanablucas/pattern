@@ -2611,3 +2611,13 @@ textarea {
 .assistant-consent span{flex:1;min-width:0;overflow-wrap:anywhere}
 .assistant-panel{min-width:0}
 .assistant-consent input{width:16px;height:16px;padding:0;flex:0 0 16px}
+
+.assistant-action-card{align-self:flex-start;width:min(100%,480px);padding:16px;border:1px solid var(--stroke);border-radius:16px;background:var(--surface);display:flex;flex-direction:column;gap:9px;overflow-wrap:anywhere}
+.assistant-action-card h3{margin:0;font-size:18px;color:var(--ink)}
+.assistant-action-card strong{color:var(--ink)}
+.assistant-action-card p{margin:0}
+.assistant-action-buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+.assistant-action-buttons .btn{flex:1;min-width:120px}
+.assistant-action-card[data-finished="true"]{border-color:var(--violet)}
+.assistant-action-feedback{min-height:1.4em}
+@media(max-width:450px){.assistant-action-buttons{flex-direction:column}}

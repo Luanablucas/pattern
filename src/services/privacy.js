@@ -16,7 +16,8 @@ const datasets={
   historicoEtapas:"SELECT e.* FROM goal_step_events e JOIN goal_steps s ON s.id=e.step_id JOIN goals g ON g.id=s.goal_id WHERE g.user_id=$1 ORDER BY e.happened_at,e.id",
   vinculosTarefas:"SELECT l.* FROM goal_task_links l JOIN goals g ON g.id=l.goal_id WHERE g.user_id=$1 ORDER BY l.goal_id,l.task_id",
   vinculosHabitos:"SELECT l.* FROM goal_habit_links l JOIN goals g ON g.id=l.goal_id WHERE g.user_id=$1 ORDER BY l.goal_id,l.habit_id",
-  sugestoesPlanejamento:"SELECT * FROM planning_suggestions WHERE user_id=$1 ORDER BY created_at,id"
+  sugestoesPlanejamento:"SELECT * FROM planning_suggestions WHERE user_id=$1 ORDER BY created_at,id",
+  propostasAssistente:"SELECT id,action_type,arguments,status,created_at,expires_at,decided_at,created_id FROM ai_action_proposals WHERE user_id=$1 ORDER BY created_at,id"
 };
 
 async function exportData(db,userId){

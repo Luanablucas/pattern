@@ -17,6 +17,7 @@ process.env.DATABASE_URL=rawUrl;
 process.env.JWT_SECRET=randomBytes(40).toString("hex");
 process.env.RESEND_API_KEY="test-mail-provider";
 process.env.MAIL_FROM="Pattern Tests <onboarding@resend.dev>";
+process.env.OPENAI_API_KEY="integration-test-key";
 process.env.APP_BASE_URL="http://localhost:3000";
 const {Pool}=require("pg");
 const {createApp}=require("../src/app");
@@ -31,6 +32,7 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
   const nativeFetch=globalThis.fetch;
   const emails=[];
   let rejectMail=false;
+  let assistantResponse=null;
   let pythonAvailable=true;
   let base="";
   let csrfCookie="";
@@ -78,6 +80,21 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
     assert.equal(activeDb,"pattern_test");
 
     globalThis.fetch=async(url,options)=>{
+      if(String(url)==="https://api.openai.com/v1/responses"){
+        const request=JSON.parse(options.body);
+        assert.ok(Array.isArray(request.tools));
+        assert.equal(request.parallel_tool_calls,false);
+        assert.equal(request.store,false);
+        const msg=String(request.input.at(-1).content);
+        if(msg.includes("agendar compromisso")){
+          const start=new Date(Date.now()+4*86400000);
+          const end=new Date(start.getTime()+3600000);
+          assistantResponse={type:"function_call",name:"create_event",call_id:"call_event_1",arguments:JSON.stringify({title:"Compromisso assistido",starts_at:start.toISOString(),ends_at:end.toISOString(),category:"study",notes:null})};
+        }else if(msg.includes("criar tarefa")){
+          assistantResponse={type:"function_call",name:"create_task",call_id:"call_task_1",arguments:JSON.stringify({title:"Tarefa proposta pela IA",priority:"high",due_date:null,notes:null})};
+        }else assistantResponse=null;
+        return new Response(JSON.stringify({model:"gpt-6-luna",output:assistantResponse?[assistantResponse]:[{type:"message",content:[{type:"output_text",text:"Você pode organizar suas tarefas."}]}]}),{status:200,headers:{"content-type":"application/json"}});
+      }
       if(String(url)==="https://api.resend.com/emails"){
         if(rejectMail)return new Response(JSON.stringify({message:"Recipient not allowed"}),{status:403,headers:{"content-type":"application/json"}});
         const message=JSON.parse(options.body);
@@ -216,6 +233,43 @@ test("fluxos HTTP reais com PostgreSQL isolado e e-mail simulado",{timeout:90000
       assert.equal(offline.status,200);
       assert.equal(offline.data.pythonOnline,false);
       pythonAvailable=true;
+    });
+
+    await t.test("Function Calling exige aprovação, respeita contas e impede execução duplicada",async()=>{
+      const requestAction=async(cookie,message)=>send("/api/assistant/chat",{method:"POST",cookie,body:{message,history:[],includeContext:false}});
+      const proposal1=await requestAction(cookies.a,"Por favor, criar tarefa de estudo");
+      assert.equal(proposal1.status,200);
+      assert.equal(proposal1.data.proposal.type,"create_task");
+      const id1=proposal1.data.proposal.id;
+      assert.equal((await db.query("SELECT COUNT(*)::int AS count FROM tasks WHERE title=$1",["Tarefa proposta pela IA"])).rows[0].count,0);
+      assert.equal((await send(`/api/assistant/proposals/${id1}`,{method:"POST",cookie:cookies.b,body:{decision:"confirm"}})).status,404);
+      assert.equal((await send(`/api/assistant/proposals/${id1}`,{method:"POST",cookie:cookies.a,body:{decision:"confirm"},skipCsrf:true})).status,403);
+      assert.equal((await send(`/api/assistant/proposals/${id1}`,{method:"POST",cookie:cookies.a,body:{decision:"reject"}})).status,200);
+      assert.equal((await send(`/api/assistant/proposals/${id1}`,{method:"POST",cookie:cookies.a,body:{decision:"confirm"}})).status,409);
+      const proposal2=await requestAction(cookies.a,"Por favor, criar tarefa nova");
+      assert.equal(proposal2.status,200);
+      const id2=proposal2.data.proposal.id;
+      const accepted=await send(`/api/assistant/proposals/${id2}`,{method:"POST",cookie:cookies.a,body:{decision:"confirm"}});
+      assert.equal(accepted.status,200);
+      assert.equal(accepted.data.status,"executed");
+      assert.equal(accepted.data.created.href,"/tasks");
+      assert.equal((await send(`/api/assistant/proposals/${id2}`,{method:"POST",cookie:cookies.a,body:{decision:"confirm"}})).status,409);
+      const created=(await db.query("SELECT user_id FROM tasks WHERE id=$1",[accepted.data.created.id])).rows[0];
+      const owner=(await db.query("SELECT id FROM users WHERE email=$1",[userA])).rows[0];
+      assert.equal(created.user_id,owner.id);
+      assert.ok(!(await send("/api/tasks",{cookie:cookies.b})).data.some(task=>task.id===accepted.data.created.id));
+      const proposedEvent=await requestAction(cookies.a,"Quero agendar compromisso de estudos");
+      assert.equal(proposedEvent.status,200);
+      assert.equal(proposedEvent.data.proposal.type,"create_event");
+      const eventId=proposedEvent.data.proposal.id;
+      const confirmation=await send(`/api/assistant/proposals/${eventId}`,{method:"POST",cookie:cookies.a,body:{decision:"confirm"}});
+      assert.equal(confirmation.status,200);
+      assert.equal(confirmation.data.created.href,"/calendar");
+      const existing=(await db.query("SELECT user_id FROM events WHERE id=$1",[confirmation.data.created.id])).rows[0];
+      assert.equal(existing.user_id,owner.id);
+      const conflict=await requestAction(cookies.a,"Quero agendar compromisso também");
+      assert.equal(conflict.status,200);
+      assert.equal((await send(`/api/assistant/proposals/${conflict.data.proposal.id}`,{method:"POST",cookie:cookies.a,body:{decision:"confirm"}})).status,409);
     });
 
     await t.test("origens externas e entradas inválidas são bloqueadas",async()=>{
