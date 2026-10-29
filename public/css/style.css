@@ -2587,3 +2587,27 @@ textarea {
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:0.01ms!important}
 }
+
+.assistant-panel{margin-bottom:22px}
+.assistant-panel-heading{align-items:flex-start;gap:16px}
+.assistant-model{font-size:12px;color:var(--violet-dark);background:var(--violet-soft);border:1px solid var(--stroke);border-radius:999px;padding:7px 11px;white-space:nowrap}
+.assistant-prompts{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 17px}
+.assistant-chat{min-height:170px;max-height:390px;overflow-y:auto;background:var(--bg);border:1px solid var(--stroke);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:13px;scrollbar-width:thin}
+.assistant-message{display:flex;gap:10px;align-items:flex-start;max-width:88%}
+.assistant-message-user{align-self:flex-end}
+.assistant-avatar{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:31px;height:31px;border-radius:11px;background:var(--violet-soft);color:var(--violet-dark);font-size:17px}
+.assistant-bubble{background:var(--surface);color:var(--ink);border:1px solid var(--stroke);border-radius:14px;padding:11px 14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
+.assistant-message-user .assistant-bubble{background:var(--violet-soft);border-color:var(--violet-soft)}
+.assistant-form{margin-top:14px}
+.assistant-label{display:block;font-weight:600;margin-bottom:6px}
+.assistant-compose{display:flex;gap:10px;align-items:stretch}
+.assistant-compose textarea{flex:1;min-width:0;border:1px solid var(--stroke);background:var(--surface);color:var(--ink);border-radius:12px;padding:12px;resize:vertical}
+.assistant-compose button{align-self:stretch;white-space:nowrap}
+.assistant-consent{display:flex;align-items:flex-start;gap:9px;margin-top:14px;font-size:13px;line-height:1.5;cursor:pointer}
+.assistant-consent input{accent-color:var(--violet-dark);margin:3px 0 0;flex-shrink:0}
+.assistant-privacy{margin:9px 0 0;line-height:1.5}
+#assistantStatus{min-height:18px;margin-top:10px}
+@media(max-width:640px){.assistant-model{white-space:normal}.assistant-panel-heading{flex-direction:column}.assistant-message{max-width:100%}.assistant-compose{flex-direction:column}.assistant-compose button{align-self:stretch}.assistant-chat{padding:12px}}
+.assistant-consent span{flex:1;min-width:0;overflow-wrap:anywhere}
+.assistant-panel{min-width:0}
+.assistant-consent input{width:16px;height:16px;padding:0;flex:0 0 16px}

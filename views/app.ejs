@@ -16,7 +16,7 @@
   <% if (page === "focus") { %><script defer src="<%= assetUrl('/static/js/focus-core.js') %>"></script><script defer src="<%= assetUrl('/static/js/focus.js') %>"></script><% } %>
   <% if (page === "goals") { %><script defer src="<%= assetUrl('/static/js/goals.js') %>"></script><% } %>
   <% if (page === "review") { %><script defer src="<%= assetUrl('/static/js/review.js') %>"></script><% } %>
-  <% if (page === "intelligence") { %><script defer src="<%= assetUrl('/static/js/intelligence.js') %>"></script><% } %>
+  <% if (page === "intelligence") { %><script defer src="<%= assetUrl('/static/js/intelligence.js') %>"></script><script defer src="<%= assetUrl('/static/js/assistant.js') %>"></script><% } %>
   <% if (page === "settings") { %><script defer src="<%= assetUrl('/static/js/account.js') %>"></script><% } %>
 </head>
 <body data-page="<%= page %>">
@@ -143,6 +143,12 @@
         <section class="page-heading intelligence-heading">
           <div><p class="eyebrow">ESPAÇO PARA O QUE IMPORTA</p><h1>Pattern Intelligence <span class="heading-sparkle">✳</span></h1><p class="muted">Sugestões para sua próxima semana, com base no que você já registrou.</p></div>
           <div class="intelligence-toolbar"><span class="muted small" id="intelligencePeriod"></span><button type="button" id="intelligenceGenerate" class="btn btn-primary">✧ Gerar sugestões</button></div>
+        </section>
+        <section class="panel assistant-panel" aria-labelledby="assistantTitle">
+          <div class="panel-header assistant-panel-heading"><div><p class="eyebrow">INTELIGÊNCIA ARTIFICIAL GENERATIVA</p><h2 id="assistantTitle">Converse com o Pattern ✦</h2><p class="muted small">Faça perguntas sobre prioridades, objetivos e organização. Respostas são sugestões, não alterações automáticas.</p></div><span class="assistant-model" id="assistantModel" aria-live="polite">Verificando IA...</span></div>
+          <div class="assistant-prompts" aria-label="Perguntas sugeridas"><button class="btn btn-soft" type="button" data-assistant-prompt="O que devo priorizar nesta semana?">✧ Minhas prioridades</button><button class="btn btn-soft" type="button" data-assistant-prompt="Me ajude a organizar minha próxima semana de forma realista.">◷ Organizar a semana</button><button class="btn btn-soft" type="button" data-assistant-prompt="Como posso avançar nos meus objetivos com pequenos passos?">◎ Evoluir nos objetivos</button></div>
+          <div class="assistant-chat" id="assistantChat" role="log" aria-label="Conversa com a IA" aria-live="polite" aria-relevant="additions text"><div class="assistant-message assistant-message-ai"><span class="assistant-avatar" aria-hidden="true">✳</span><div class="assistant-bubble">Olá! Posso ajudar a pensar na sua rotina. Se você autorizar o resumo dos seus registros, consigo oferecer sugestões mais contextualizadas.</div></div></div>
+          <form id="assistantForm" class="assistant-form"><label for="assistantQuestion" class="assistant-label">Sua pergunta</label><div class="assistant-compose"><textarea id="assistantQuestion" name="message" rows="2" maxlength="900" required placeholder="Ex.: Como dividir minhas tarefas sem sobrecarregar a semana?"></textarea><button type="submit" class="btn btn-primary" id="assistantSend">Enviar ✧</button></div><label class="assistant-consent"><input type="checkbox" id="assistantIncludeContext" /> <span>Permitir enviar um resumo limitado das minhas tarefas, objetivos, hábitos, foco e compromissos para a API de IA nesta pergunta.</span></label><p class="assistant-privacy muted small">Sem marcar a opção, somente a pergunta e o histórico desta conversa serão enviados. A IA não altera registros. As mensagens não são salvas no Pattern e a solicitação à API desativa o armazenamento de respostas; o provedor pode manter logs conforme suas políticas.</p><p id="assistantStatus" class="muted small" role="status" aria-live="polite"></p></form>
         </section>
         <section class="intelligence-summary" id="intelligenceSummary"><p class="muted">Carregando...</p></section>
         <p class="intelligence-info" id="intelligenceStatus">Analisando seu planejamento...</p>

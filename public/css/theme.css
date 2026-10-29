@@ -430,3 +430,9 @@ html[data-theme="dark"] .calendar-scroll:focus-visible{outline-color:#e5ceff}
 .account-danger-zone{border-color:#dca6b2}
 html[data-theme="dark"] .account-danger-zone{border-color:#865463}
 @media(max-width:750px){.account-privacy-grid{grid-template-columns:1fr}}
+html[data-theme="dark"] .assistant-chat{background:#1d1727;border-color:var(--stroke)}
+html[data-theme="dark"] .assistant-bubble{background:#30283e;border-color:#4b4059;color:#f1eafa}
+html[data-theme="dark"] .assistant-message-user .assistant-bubble{background:#453456;border-color:#655077}
+html[data-theme="dark"] .assistant-model,html[data-theme="dark"] .assistant-avatar{background:#3f3150;color:#e1c5ff;border-color:#5e4973}
+html[data-theme="dark"] .assistant-consent{color:#ede3f7}
+html[data-theme="dark"] .assistant-consent input{accent-color:#c5a5f2}
