@@ -1,9 +1,8 @@
 "use strict";
-const { z } = require("zod");
 const { randomUUID } = require("node:crypto");
 const { addDays, localDate, occurrences, occurrenceTimestamp } = require("../../recurrence-utils");
 const { dateString } = require("../validation/common");
-const { eventSchema, eventQueryBase, eventRangeSchema } = require("../validation/events");
+const { eventSchema, eventConflictSchema, eventQueryBase, eventRangeSchema } = require("../validation/events");
 const { validate } = require("../middleware/api");
 const createEventService = require("../services/events");
 
@@ -98,7 +97,7 @@ module.exports = function createEventsController(db) {
   };
 
   const conflicts = async (req,res) => {
-    const parse = eventSchema.extend({ excludeId: z.string().uuid().nullable().default(null), excludeOccurrence: dateString.nullable().default(null) }).safeParse(req.body);
+    const parse = eventConflictSchema.safeParse(req.body);
     if (!parse.success) return res.status(400).json({ error: parse.error.issues[0].message });
     const b = parse.data;
     const base = localDate(b.startsAt);
